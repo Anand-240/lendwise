@@ -1,0 +1,25 @@
+# Large / generated files — see README "Large files"
+backend/app/ml/artifacts/model.pkl
+backend/data/*.csv
+*.db
+*.db-journal
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+.DS_Store

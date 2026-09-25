@@ -1,0 +1,3019 @@
+{
+ "generated_at": "2026-09-24T20:00:23.165264+00:00",
+ "model_version": "rf-100t-414f",
+ "n_features": 414,
+ "training_rows": 252000,
+ "test_rows": 50400,
+ "default_rate": 0.123,
+ "options": {
+  "Married/Single": [
+   {
+    "value": "married",
+    "label": "Married"
+   },
+   {
+    "value": "single",
+    "label": "Single"
+   }
+  ],
+  "House_Ownership": [
+   {
+    "value": "norent_noown",
+    "label": "Neither owned nor rented"
+   },
+   {
+    "value": "owned",
+    "label": "Owned"
+   },
+   {
+    "value": "rented",
+    "label": "Rented"
+   }
+  ],
+  "Car_Ownership": [
+   {
+    "value": "no",
+    "label": "No"
+   },
+   {
+    "value": "yes",
+    "label": "Yes"
+   }
+  ],
+  "Profession": [
+   {
+    "value": "Air_traffic_controller",
+    "label": "Air traffic controller"
+   },
+   {
+    "value": "Analyst",
+    "label": "Analyst"
+   },
+   {
+    "value": "Architect",
+    "label": "Architect"
+   },
+   {
+    "value": "Army_officer",
+    "label": "Army officer"
+   },
+   {
+    "value": "Artist",
+    "label": "Artist"
+   },
+   {
+    "value": "Aviator",
+    "label": "Aviator"
+   },
+   {
+    "value": "Biomedical_Engineer",
+    "label": "Biomedical Engineer"
+   },
+   {
+    "value": "Chartered_Accountant",
+    "label": "Chartered Accountant"
+   },
+   {
+    "value": "Chef",
+    "label": "Chef"
+   },
+   {
+    "value": "Chemical_engineer",
+    "label": "Chemical engineer"
+   },
+   {
+    "value": "Civil_engineer",
+    "label": "Civil engineer"
+   },
+   {
+    "value": "Civil_servant",
+    "label": "Civil servant"
+   },
+   {
+    "value": "Comedian",
+    "label": "Comedian"
+   },
+   {
+    "value": "Computer_hardware_engineer",
+    "label": "Computer hardware engineer"
+   },
+   {
+    "value": "Computer_operator",
+    "label": "Computer operator"
+   },
+   {
+    "value": "Consultant",
+    "label": "Consultant"
+   },
+   {
+    "value": "Dentist",
+    "label": "Dentist"
+   },
+   {
+    "value": "Design_Engineer",
+    "label": "Design Engineer"
+   },
+   {
+    "value": "Designer",
+    "label": "Designer"
+   },
+   {
+    "value": "Drafter",
+    "label": "Drafter"
+   },
+   {
+    "value": "Economist",
+    "label": "Economist"
+   },
+   {
+    "value": "Engineer",
+    "label": "Engineer"
+   },
+   {
+    "value": "Fashion_Designer",
+    "label": "Fashion Designer"
+   },
+   {
+    "value": "Financial_Analyst",
+    "label": "Financial Analyst"
+   },
+   {
+    "value": "Firefighter",
+    "label": "Firefighter"
+   },
+   {
+    "value": "Flight_attendant",
+    "label": "Flight attendant"
+   },
+   {
+    "value": "Geologist",
+    "label": "Geologist"
+   },
+   {
+    "value": "Graphic_Designer",
+    "label": "Graphic Designer"
+   },
+   {
+    "value": "Hotel_Manager",
+    "label": "Hotel Manager"
+   },
+   {
+    "value": "Industrial_Engineer",
+    "label": "Industrial Engineer"
+   },
+   {
+    "value": "Lawyer",
+    "label": "Lawyer"
+   },
+   {
+    "value": "Librarian",
+    "label": "Librarian"
+   },
+   {
+    "value": "Magistrate",
+    "label": "Magistrate"
+   },
+   {
+    "value": "Mechanical_engineer",
+    "label": "Mechanical engineer"
+   },
+   {
+    "value": "Microbiologist",
+    "label": "Microbiologist"
+   },
+   {
+    "value": "Official",
+    "label": "Official"
+   },
+   {
+    "value": "Petroleum_Engineer",
+    "label": "Petroleum Engineer"
+   },
+   {
+    "value": "Physician",
+    "label": "Physician"
+   },
+   {
+    "value": "Police_officer",
+    "label": "Police officer"
+   },
+   {
+    "value": "Politician",
+    "label": "Politician"
+   },
+   {
+    "value": "Psychologist",
+    "label": "Psychologist"
+   },
+   {
+    "value": "Scientist",
+    "label": "Scientist"
+   },
+   {
+    "value": "Secretary",
+    "label": "Secretary"
+   },
+   {
+    "value": "Software_Developer",
+    "label": "Software Developer"
+   },
+   {
+    "value": "Statistician",
+    "label": "Statistician"
+   },
+   {
+    "value": "Surgeon",
+    "label": "Surgeon"
+   },
+   {
+    "value": "Surveyor",
+    "label": "Surveyor"
+   },
+   {
+    "value": "Technical_writer",
+    "label": "Technical writer"
+   },
+   {
+    "value": "Technician",
+    "label": "Technician"
+   },
+   {
+    "value": "Technology_specialist",
+    "label": "Technology specialist"
+   },
+   {
+    "value": "Web_designer",
+    "label": "Web designer"
+   }
+  ],
+  "CITY": [
+   {
+    "value": "Adoni",
+    "label": "Adoni"
+   },
+   {
+    "value": "Agartala",
+    "label": "Agartala"
+   },
+   {
+    "value": "Agra",
+    "label": "Agra"
+   },
+   {
+    "value": "Ahmedabad",
+    "label": "Ahmedabad"
+   },
+   {
+    "value": "Ahmednagar",
+    "label": "Ahmednagar"
+   },
+   {
+    "value": "Aizawl",
+    "label": "Aizawl"
+   },
+   {
+    "value": "Ajmer",
+    "label": "Ajmer"
+   },
+   {
+    "value": "Akola",
+    "label": "Akola"
+   },
+   {
+    "value": "Alappuzha",
+    "label": "Alappuzha"
+   },
+   {
+    "value": "Aligarh",
+    "label": "Aligarh"
+   },
+   {
+    "value": "Allahabad",
+    "label": "Allahabad"
+   },
+   {
+    "value": "Alwar",
+    "label": "Alwar"
+   },
+   {
+    "value": "Amaravati",
+    "label": "Amaravati"
+   },
+   {
+    "value": "Ambala",
+    "label": "Ambala"
+   },
+   {
+    "value": "Ambarnath",
+    "label": "Ambarnath"
+   },
+   {
+    "value": "Ambattur",
+    "label": "Ambattur"
+   },
+   {
+    "value": "Amravati",
+    "label": "Amravati"
+   },
+   {
+    "value": "Amritsar",
+    "label": "Amritsar"
+   },
+   {
+    "value": "Amroha",
+    "label": "Amroha"
+   },
+   {
+    "value": "Anand",
+    "label": "Anand"
+   },
+   {
+    "value": "Anantapur",
+    "label": "Anantapur"
+   },
+   {
+    "value": "Anantapuram[24]",
+    "label": "Anantapuram"
+   },
+   {
+    "value": "Arrah",
+    "label": "Arrah"
+   },
+   {
+    "value": "Asansol",
+    "label": "Asansol"
+   },
+   {
+    "value": "Aurangabad[39]",
+    "label": "Aurangabad (Bihar)"
+   },
+   {
+    "value": "Aurangabad",
+    "label": "Aurangabad (Maharashtra)"
+   },
+   {
+    "value": "Avadi",
+    "label": "Avadi"
+   },
+   {
+    "value": "Bahraich",
+    "label": "Bahraich"
+   },
+   {
+    "value": "Ballia",
+    "label": "Ballia"
+   },
+   {
+    "value": "Bally",
+    "label": "Bally"
+   },
+   {
+    "value": "Bangalore",
+    "label": "Bangalore"
+   },
+   {
+    "value": "Baranagar",
+    "label": "Baranagar"
+   },
+   {
+    "value": "Barasat",
+    "label": "Barasat"
+   },
+   {
+    "value": "Bardhaman",
+    "label": "Bardhaman"
+   },
+   {
+    "value": "Bareilly",
+    "label": "Bareilly"
+   },
+   {
+    "value": "Bathinda",
+    "label": "Bathinda"
+   },
+   {
+    "value": "Begusarai",
+    "label": "Begusarai"
+   },
+   {
+    "value": "Belgaum",
+    "label": "Belgaum"
+   },
+   {
+    "value": "Bellary",
+    "label": "Bellary"
+   },
+   {
+    "value": "Berhampore",
+    "label": "Berhampore"
+   },
+   {
+    "value": "Berhampur",
+    "label": "Berhampur"
+   },
+   {
+    "value": "Bettiah[33]",
+    "label": "Bettiah"
+   },
+   {
+    "value": "Bhagalpur",
+    "label": "Bhagalpur"
+   },
+   {
+    "value": "Bhalswa_Jahangir_Pur",
+    "label": "Bhalswa Jahangir Pur"
+   },
+   {
+    "value": "Bharatpur",
+    "label": "Bharatpur"
+   },
+   {
+    "value": "Bhatpara",
+    "label": "Bhatpara"
+   },
+   {
+    "value": "Bhavnagar",
+    "label": "Bhavnagar"
+   },
+   {
+    "value": "Bhilai",
+    "label": "Bhilai"
+   },
+   {
+    "value": "Bhilwara",
+    "label": "Bhilwara"
+   },
+   {
+    "value": "Bhimavaram",
+    "label": "Bhimavaram"
+   },
+   {
+    "value": "Bhind",
+    "label": "Bhind"
+   },
+   {
+    "value": "Bhiwandi",
+    "label": "Bhiwandi"
+   },
+   {
+    "value": "Bhiwani",
+    "label": "Bhiwani"
+   },
+   {
+    "value": "Bhopal",
+    "label": "Bhopal"
+   },
+   {
+    "value": "Bhubaneswar",
+    "label": "Bhubaneswar"
+   },
+   {
+    "value": "Bhusawal",
+    "label": "Bhusawal"
+   },
+   {
+    "value": "Bidar",
+    "label": "Bidar"
+   },
+   {
+    "value": "Bidhannagar",
+    "label": "Bidhannagar"
+   },
+   {
+    "value": "Bihar_Sharif",
+    "label": "Bihar Sharif"
+   },
+   {
+    "value": "Bijapur",
+    "label": "Bijapur"
+   },
+   {
+    "value": "Bikaner",
+    "label": "Bikaner"
+   },
+   {
+    "value": "Bilaspur",
+    "label": "Bilaspur"
+   },
+   {
+    "value": "Bokaro",
+    "label": "Bokaro"
+   },
+   {
+    "value": "Bongaigaon",
+    "label": "Bongaigaon"
+   },
+   {
+    "value": "Bulandshahr",
+    "label": "Bulandshahr"
+   },
+   {
+    "value": "Burhanpur",
+    "label": "Burhanpur"
+   },
+   {
+    "value": "Buxar[37]",
+    "label": "Buxar"
+   },
+   {
+    "value": "Chandigarh_city",
+    "label": "Chandigarh city"
+   },
+   {
+    "value": "Chandrapur",
+    "label": "Chandrapur"
+   },
+   {
+    "value": "Chapra",
+    "label": "Chapra"
+   },
+   {
+    "value": "Chennai",
+    "label": "Chennai"
+   },
+   {
+    "value": "Chinsurah",
+    "label": "Chinsurah"
+   },
+   {
+    "value": "Chittoor[28]",
+    "label": "Chittoor"
+   },
+   {
+    "value": "Coimbatore",
+    "label": "Coimbatore"
+   },
+   {
+    "value": "Cuttack",
+    "label": "Cuttack"
+   },
+   {
+    "value": "Danapur",
+    "label": "Danapur"
+   },
+   {
+    "value": "Darbhanga",
+    "label": "Darbhanga"
+   },
+   {
+    "value": "Davanagere",
+    "label": "Davanagere"
+   },
+   {
+    "value": "Dehradun",
+    "label": "Dehradun"
+   },
+   {
+    "value": "Dehri[30]",
+    "label": "Dehri"
+   },
+   {
+    "value": "Delhi_city",
+    "label": "Delhi city"
+   },
+   {
+    "value": "Deoghar",
+    "label": "Deoghar"
+   },
+   {
+    "value": "Dewas",
+    "label": "Dewas"
+   },
+   {
+    "value": "Dhanbad",
+    "label": "Dhanbad"
+   },
+   {
+    "value": "Dharmavaram",
+    "label": "Dharmavaram"
+   },
+   {
+    "value": "Dhule",
+    "label": "Dhule"
+   },
+   {
+    "value": "Dibrugarh",
+    "label": "Dibrugarh"
+   },
+   {
+    "value": "Dindigul",
+    "label": "Dindigul"
+   },
+   {
+    "value": "Durg",
+    "label": "Durg"
+   },
+   {
+    "value": "Durgapur",
+    "label": "Durgapur"
+   },
+   {
+    "value": "Eluru[25]",
+    "label": "Eluru"
+   },
+   {
+    "value": "Erode[17]",
+    "label": "Erode"
+   },
+   {
+    "value": "Etawah",
+    "label": "Etawah"
+   },
+   {
+    "value": "Faridabad",
+    "label": "Faridabad"
+   },
+   {
+    "value": "Farrukhabad",
+    "label": "Farrukhabad"
+   },
+   {
+    "value": "Fatehpur",
+    "label": "Fatehpur"
+   },
+   {
+    "value": "Firozabad",
+    "label": "Firozabad"
+   },
+   {
+    "value": "Gandhidham",
+    "label": "Gandhidham"
+   },
+   {
+    "value": "Gandhinagar",
+    "label": "Gandhinagar"
+   },
+   {
+    "value": "Gangtok",
+    "label": "Gangtok"
+   },
+   {
+    "value": "Gaya",
+    "label": "Gaya"
+   },
+   {
+    "value": "Ghaziabad",
+    "label": "Ghaziabad"
+   },
+   {
+    "value": "Giridih",
+    "label": "Giridih"
+   },
+   {
+    "value": "Gopalpur",
+    "label": "Gopalpur"
+   },
+   {
+    "value": "Gorakhpur",
+    "label": "Gorakhpur"
+   },
+   {
+    "value": "Gudivada",
+    "label": "Gudivada"
+   },
+   {
+    "value": "Gulbarga",
+    "label": "Gulbarga"
+   },
+   {
+    "value": "Guna",
+    "label": "Guna"
+   },
+   {
+    "value": "Guntakal",
+    "label": "Guntakal"
+   },
+   {
+    "value": "Guntur[13]",
+    "label": "Guntur"
+   },
+   {
+    "value": "Gurgaon",
+    "label": "Gurgaon"
+   },
+   {
+    "value": "Guwahati",
+    "label": "Guwahati"
+   },
+   {
+    "value": "Gwalior",
+    "label": "Gwalior"
+   },
+   {
+    "value": "Hajipur[31]",
+    "label": "Hajipur"
+   },
+   {
+    "value": "Haldia",
+    "label": "Haldia"
+   },
+   {
+    "value": "Hapur",
+    "label": "Hapur"
+   },
+   {
+    "value": "Haridwar",
+    "label": "Haridwar"
+   },
+   {
+    "value": "Hazaribagh",
+    "label": "Hazaribagh"
+   },
+   {
+    "value": "Hindupur",
+    "label": "Hindupur"
+   },
+   {
+    "value": "Hospet",
+    "label": "Hospet"
+   },
+   {
+    "value": "Hosur",
+    "label": "Hosur"
+   },
+   {
+    "value": "Howrah",
+    "label": "Howrah"
+   },
+   {
+    "value": "Hubli\u00e2\u20ac\u201cDharwad",
+    "label": "Hubli\u00e2\u20ac\u201cDharwad"
+   },
+   {
+    "value": "Hyderabad",
+    "label": "Hyderabad"
+   },
+   {
+    "value": "Ichalkaranji",
+    "label": "Ichalkaranji"
+   },
+   {
+    "value": "Imphal",
+    "label": "Imphal"
+   },
+   {
+    "value": "Indore",
+    "label": "Indore"
+   },
+   {
+    "value": "Jabalpur",
+    "label": "Jabalpur"
+   },
+   {
+    "value": "Jaipur",
+    "label": "Jaipur"
+   },
+   {
+    "value": "Jalandhar",
+    "label": "Jalandhar"
+   },
+   {
+    "value": "Jalgaon",
+    "label": "Jalgaon"
+   },
+   {
+    "value": "Jalna",
+    "label": "Jalna"
+   },
+   {
+    "value": "Jamalpur[36]",
+    "label": "Jamalpur"
+   },
+   {
+    "value": "Jammu[16]",
+    "label": "Jammu"
+   },
+   {
+    "value": "Jamnagar",
+    "label": "Jamnagar"
+   },
+   {
+    "value": "Jamshedpur",
+    "label": "Jamshedpur"
+   },
+   {
+    "value": "Jaunpur",
+    "label": "Jaunpur"
+   },
+   {
+    "value": "Jehanabad[38]",
+    "label": "Jehanabad"
+   },
+   {
+    "value": "Jhansi",
+    "label": "Jhansi"
+   },
+   {
+    "value": "Jodhpur",
+    "label": "Jodhpur"
+   },
+   {
+    "value": "Jorhat",
+    "label": "Jorhat"
+   },
+   {
+    "value": "Junagadh",
+    "label": "Junagadh"
+   },
+   {
+    "value": "Kadapa[23]",
+    "label": "Kadapa"
+   },
+   {
+    "value": "Kakinada",
+    "label": "Kakinada"
+   },
+   {
+    "value": "Kalyan-Dombivli",
+    "label": "Kalyan-Dombivli"
+   },
+   {
+    "value": "Kamarhati",
+    "label": "Kamarhati"
+   },
+   {
+    "value": "Kanpur",
+    "label": "Kanpur"
+   },
+   {
+    "value": "Karaikudi",
+    "label": "Karaikudi"
+   },
+   {
+    "value": "Karawal_Nagar",
+    "label": "Karawal Nagar"
+   },
+   {
+    "value": "Karimnagar",
+    "label": "Karimnagar"
+   },
+   {
+    "value": "Karnal",
+    "label": "Karnal"
+   },
+   {
+    "value": "Katihar",
+    "label": "Katihar"
+   },
+   {
+    "value": "Katni",
+    "label": "Katni"
+   },
+   {
+    "value": "Kavali",
+    "label": "Kavali"
+   },
+   {
+    "value": "Khammam",
+    "label": "Khammam"
+   },
+   {
+    "value": "Khandwa",
+    "label": "Khandwa"
+   },
+   {
+    "value": "Kharagpur",
+    "label": "Kharagpur"
+   },
+   {
+    "value": "Khora,_Ghaziabad",
+    "label": "Khora, Ghaziabad"
+   },
+   {
+    "value": "Kirari_Suleman_Nagar",
+    "label": "Kirari Suleman Nagar"
+   },
+   {
+    "value": "Kishanganj[35]",
+    "label": "Kishanganj"
+   },
+   {
+    "value": "Kochi",
+    "label": "Kochi"
+   },
+   {
+    "value": "Kolhapur",
+    "label": "Kolhapur"
+   },
+   {
+    "value": "Kolkata",
+    "label": "Kolkata"
+   },
+   {
+    "value": "Kollam",
+    "label": "Kollam"
+   },
+   {
+    "value": "Korba",
+    "label": "Korba"
+   },
+   {
+    "value": "Kota[6]",
+    "label": "Kota"
+   },
+   {
+    "value": "Kottayam",
+    "label": "Kottayam"
+   },
+   {
+    "value": "Kozhikode",
+    "label": "Kozhikode"
+   },
+   {
+    "value": "Kulti",
+    "label": "Kulti"
+   },
+   {
+    "value": "Kumbakonam",
+    "label": "Kumbakonam"
+   },
+   {
+    "value": "Kurnool[18]",
+    "label": "Kurnool"
+   },
+   {
+    "value": "Latur",
+    "label": "Latur"
+   },
+   {
+    "value": "Loni",
+    "label": "Loni"
+   },
+   {
+    "value": "Lucknow",
+    "label": "Lucknow"
+   },
+   {
+    "value": "Ludhiana",
+    "label": "Ludhiana"
+   },
+   {
+    "value": "Machilipatnam",
+    "label": "Machilipatnam"
+   },
+   {
+    "value": "Madanapalle",
+    "label": "Madanapalle"
+   },
+   {
+    "value": "Madhyamgram",
+    "label": "Madhyamgram"
+   },
+   {
+    "value": "Madurai",
+    "label": "Madurai"
+   },
+   {
+    "value": "Mahbubnagar",
+    "label": "Mahbubnagar"
+   },
+   {
+    "value": "Maheshtala",
+    "label": "Maheshtala"
+   },
+   {
+    "value": "Malda",
+    "label": "Malda"
+   },
+   {
+    "value": "Malegaon",
+    "label": "Malegaon"
+   },
+   {
+    "value": "Mangalore",
+    "label": "Mangalore"
+   },
+   {
+    "value": "Mango",
+    "label": "Mango"
+   },
+   {
+    "value": "Mathura",
+    "label": "Mathura"
+   },
+   {
+    "value": "Mau",
+    "label": "Mau"
+   },
+   {
+    "value": "Medininagar",
+    "label": "Medininagar"
+   },
+   {
+    "value": "Meerut",
+    "label": "Meerut"
+   },
+   {
+    "value": "Mehsana",
+    "label": "Mehsana"
+   },
+   {
+    "value": "Mira-Bhayandar",
+    "label": "Mira-Bhayandar"
+   },
+   {
+    "value": "Miryalaguda",
+    "label": "Miryalaguda"
+   },
+   {
+    "value": "Mirzapur",
+    "label": "Mirzapur"
+   },
+   {
+    "value": "Moradabad",
+    "label": "Moradabad"
+   },
+   {
+    "value": "Morbi",
+    "label": "Morbi"
+   },
+   {
+    "value": "Morena",
+    "label": "Morena"
+   },
+   {
+    "value": "Motihari[34]",
+    "label": "Motihari"
+   },
+   {
+    "value": "Mumbai",
+    "label": "Mumbai"
+   },
+   {
+    "value": "Munger",
+    "label": "Munger"
+   },
+   {
+    "value": "Muzaffarnagar",
+    "label": "Muzaffarnagar"
+   },
+   {
+    "value": "Muzaffarpur",
+    "label": "Muzaffarpur"
+   },
+   {
+    "value": "Mysore[7][8][9]",
+    "label": "Mysore"
+   },
+   {
+    "value": "Nadiad",
+    "label": "Nadiad"
+   },
+   {
+    "value": "Nagaon",
+    "label": "Nagaon"
+   },
+   {
+    "value": "Nagercoil",
+    "label": "Nagercoil"
+   },
+   {
+    "value": "Nagpur",
+    "label": "Nagpur"
+   },
+   {
+    "value": "Naihati",
+    "label": "Naihati"
+   },
+   {
+    "value": "Nanded",
+    "label": "Nanded"
+   },
+   {
+    "value": "Nandyal",
+    "label": "Nandyal"
+   },
+   {
+    "value": "Nangloi_Jat",
+    "label": "Nangloi Jat"
+   },
+   {
+    "value": "Narasaraopet",
+    "label": "Narasaraopet"
+   },
+   {
+    "value": "Nashik",
+    "label": "Nashik"
+   },
+   {
+    "value": "Navi_Mumbai",
+    "label": "Navi Mumbai"
+   },
+   {
+    "value": "Nellore[14][15]",
+    "label": "Nellore"
+   },
+   {
+    "value": "New_Delhi",
+    "label": "New Delhi"
+   },
+   {
+    "value": "Nizamabad",
+    "label": "Nizamabad"
+   },
+   {
+    "value": "Noida",
+    "label": "Noida"
+   },
+   {
+    "value": "North_Dumdum",
+    "label": "North Dumdum"
+   },
+   {
+    "value": "Ongole",
+    "label": "Ongole"
+   },
+   {
+    "value": "Orai",
+    "label": "Orai"
+   },
+   {
+    "value": "Ozhukarai",
+    "label": "Ozhukarai"
+   },
+   {
+    "value": "Pali",
+    "label": "Pali"
+   },
+   {
+    "value": "Pallavaram",
+    "label": "Pallavaram"
+   },
+   {
+    "value": "Panchkula",
+    "label": "Panchkula"
+   },
+   {
+    "value": "Panihati",
+    "label": "Panihati"
+   },
+   {
+    "value": "Panipat",
+    "label": "Panipat"
+   },
+   {
+    "value": "Panvel",
+    "label": "Panvel"
+   },
+   {
+    "value": "Parbhani",
+    "label": "Parbhani"
+   },
+   {
+    "value": "Patiala",
+    "label": "Patiala"
+   },
+   {
+    "value": "Patna",
+    "label": "Patna"
+   },
+   {
+    "value": "Phagwara",
+    "label": "Phagwara"
+   },
+   {
+    "value": "Phusro",
+    "label": "Phusro"
+   },
+   {
+    "value": "Pimpri-Chinchwad",
+    "label": "Pimpri-Chinchwad"
+   },
+   {
+    "value": "Pondicherry",
+    "label": "Pondicherry"
+   },
+   {
+    "value": "Proddatur",
+    "label": "Proddatur"
+   },
+   {
+    "value": "Pudukkottai",
+    "label": "Pudukkottai"
+   },
+   {
+    "value": "Pune",
+    "label": "Pune"
+   },
+   {
+    "value": "Purnia[26]",
+    "label": "Purnia"
+   },
+   {
+    "value": "Raebareli",
+    "label": "Raebareli"
+   },
+   {
+    "value": "Raichur",
+    "label": "Raichur"
+   },
+   {
+    "value": "Raiganj",
+    "label": "Raiganj"
+   },
+   {
+    "value": "Raipur",
+    "label": "Raipur"
+   },
+   {
+    "value": "Rajahmundry[19][20]",
+    "label": "Rajahmundry"
+   },
+   {
+    "value": "Rajkot",
+    "label": "Rajkot"
+   },
+   {
+    "value": "Rajpur_Sonarpur",
+    "label": "Rajpur Sonarpur"
+   },
+   {
+    "value": "Ramagundam[27]",
+    "label": "Ramagundam"
+   },
+   {
+    "value": "Ramgarh",
+    "label": "Ramgarh"
+   },
+   {
+    "value": "Rampur",
+    "label": "Rampur"
+   },
+   {
+    "value": "Ranchi",
+    "label": "Ranchi"
+   },
+   {
+    "value": "Ratlam",
+    "label": "Ratlam"
+   },
+   {
+    "value": "Raurkela_Industrial_Township",
+    "label": "Raurkela Industrial Township"
+   },
+   {
+    "value": "Rewa",
+    "label": "Rewa"
+   },
+   {
+    "value": "Rohtak",
+    "label": "Rohtak"
+   },
+   {
+    "value": "Rourkela",
+    "label": "Rourkela"
+   },
+   {
+    "value": "Sagar",
+    "label": "Sagar"
+   },
+   {
+    "value": "Saharanpur",
+    "label": "Saharanpur"
+   },
+   {
+    "value": "Saharsa[29]",
+    "label": "Saharsa"
+   },
+   {
+    "value": "Salem",
+    "label": "Salem"
+   },
+   {
+    "value": "Sambalpur",
+    "label": "Sambalpur"
+   },
+   {
+    "value": "Sambhal",
+    "label": "Sambhal"
+   },
+   {
+    "value": "Sangli-Miraj_&_Kupwad",
+    "label": "Sangli-Miraj & Kupwad"
+   },
+   {
+    "value": "Sasaram[30]",
+    "label": "Sasaram"
+   },
+   {
+    "value": "Satara",
+    "label": "Satara"
+   },
+   {
+    "value": "Satna",
+    "label": "Satna"
+   },
+   {
+    "value": "Secunderabad",
+    "label": "Secunderabad"
+   },
+   {
+    "value": "Serampore",
+    "label": "Serampore"
+   },
+   {
+    "value": "Shahjahanpur",
+    "label": "Shahjahanpur"
+   },
+   {
+    "value": "Shimla",
+    "label": "Shimla"
+   },
+   {
+    "value": "Shimoga",
+    "label": "Shimoga"
+   },
+   {
+    "value": "Shivpuri",
+    "label": "Shivpuri"
+   },
+   {
+    "value": "Sikar",
+    "label": "Sikar"
+   },
+   {
+    "value": "Silchar",
+    "label": "Silchar"
+   },
+   {
+    "value": "Siliguri",
+    "label": "Siliguri"
+   },
+   {
+    "value": "Singrauli",
+    "label": "Singrauli"
+   },
+   {
+    "value": "Sirsa",
+    "label": "Sirsa"
+   },
+   {
+    "value": "Siwan[32]",
+    "label": "Siwan"
+   },
+   {
+    "value": "Solapur",
+    "label": "Solapur"
+   },
+   {
+    "value": "Sonipat",
+    "label": "Sonipat"
+   },
+   {
+    "value": "South_Dumdum",
+    "label": "South Dumdum"
+   },
+   {
+    "value": "Sri_Ganganagar",
+    "label": "Sri Ganganagar"
+   },
+   {
+    "value": "Srikakulam",
+    "label": "Srikakulam"
+   },
+   {
+    "value": "Srinagar",
+    "label": "Srinagar"
+   },
+   {
+    "value": "Sultan_Pur_Majra",
+    "label": "Sultan Pur Majra"
+   },
+   {
+    "value": "Surat",
+    "label": "Surat"
+   },
+   {
+    "value": "Surendranagar_Dudhrej",
+    "label": "Surendranagar Dudhrej"
+   },
+   {
+    "value": "Suryapet",
+    "label": "Suryapet"
+   },
+   {
+    "value": "Tadepalligudem",
+    "label": "Tadepalligudem"
+   },
+   {
+    "value": "Tadipatri",
+    "label": "Tadipatri"
+   },
+   {
+    "value": "Tenali",
+    "label": "Tenali"
+   },
+   {
+    "value": "Tezpur",
+    "label": "Tezpur"
+   },
+   {
+    "value": "Thane",
+    "label": "Thane"
+   },
+   {
+    "value": "Thanjavur",
+    "label": "Thanjavur"
+   },
+   {
+    "value": "Thiruvananthapuram",
+    "label": "Thiruvananthapuram"
+   },
+   {
+    "value": "Thoothukudi",
+    "label": "Thoothukudi"
+   },
+   {
+    "value": "Thrissur",
+    "label": "Thrissur"
+   },
+   {
+    "value": "Tinsukia",
+    "label": "Tinsukia"
+   },
+   {
+    "value": "Tiruchirappalli[10]",
+    "label": "Tiruchirappalli"
+   },
+   {
+    "value": "Tirunelveli",
+    "label": "Tirunelveli"
+   },
+   {
+    "value": "Tirupati[21][22]",
+    "label": "Tirupati"
+   },
+   {
+    "value": "Tiruppur",
+    "label": "Tiruppur"
+   },
+   {
+    "value": "Tiruvottiyur",
+    "label": "Tiruvottiyur"
+   },
+   {
+    "value": "Tumkur",
+    "label": "Tumkur"
+   },
+   {
+    "value": "Udaipur",
+    "label": "Udaipur"
+   },
+   {
+    "value": "Udupi",
+    "label": "Udupi"
+   },
+   {
+    "value": "Ujjain",
+    "label": "Ujjain"
+   },
+   {
+    "value": "Ulhasnagar",
+    "label": "Ulhasnagar"
+   },
+   {
+    "value": "Uluberia",
+    "label": "Uluberia"
+   },
+   {
+    "value": "Unnao",
+    "label": "Unnao"
+   },
+   {
+    "value": "Vadodara",
+    "label": "Vadodara"
+   },
+   {
+    "value": "Varanasi",
+    "label": "Varanasi"
+   },
+   {
+    "value": "Vasai-Virar",
+    "label": "Vasai-Virar"
+   },
+   {
+    "value": "Vellore",
+    "label": "Vellore"
+   },
+   {
+    "value": "Vijayanagaram",
+    "label": "Vijayanagaram"
+   },
+   {
+    "value": "Vijayawada",
+    "label": "Vijayawada"
+   },
+   {
+    "value": "Visakhapatnam[4]",
+    "label": "Visakhapatnam"
+   },
+   {
+    "value": "Warangal[11][12]",
+    "label": "Warangal"
+   },
+   {
+    "value": "Yamunanagar",
+    "label": "Yamunanagar"
+   }
+  ],
+  "STATE": [
+   {
+    "value": "Andhra_Pradesh",
+    "label": "Andhra Pradesh"
+   },
+   {
+    "value": "Assam",
+    "label": "Assam"
+   },
+   {
+    "value": "Bihar",
+    "label": "Bihar"
+   },
+   {
+    "value": "Chandigarh",
+    "label": "Chandigarh"
+   },
+   {
+    "value": "Chhattisgarh",
+    "label": "Chhattisgarh"
+   },
+   {
+    "value": "Delhi",
+    "label": "Delhi"
+   },
+   {
+    "value": "Gujarat",
+    "label": "Gujarat"
+   },
+   {
+    "value": "Haryana",
+    "label": "Haryana"
+   },
+   {
+    "value": "Himachal_Pradesh",
+    "label": "Himachal Pradesh"
+   },
+   {
+    "value": "Jammu_and_Kashmir",
+    "label": "Jammu and Kashmir"
+   },
+   {
+    "value": "Jharkhand",
+    "label": "Jharkhand"
+   },
+   {
+    "value": "Karnataka",
+    "label": "Karnataka"
+   },
+   {
+    "value": "Kerala",
+    "label": "Kerala"
+   },
+   {
+    "value": "Madhya_Pradesh",
+    "label": "Madhya Pradesh"
+   },
+   {
+    "value": "Maharashtra",
+    "label": "Maharashtra"
+   },
+   {
+    "value": "Manipur",
+    "label": "Manipur"
+   },
+   {
+    "value": "Mizoram",
+    "label": "Mizoram"
+   },
+   {
+    "value": "Odisha",
+    "label": "Odisha"
+   },
+   {
+    "value": "Puducherry",
+    "label": "Puducherry"
+   },
+   {
+    "value": "Punjab",
+    "label": "Punjab"
+   },
+   {
+    "value": "Rajasthan",
+    "label": "Rajasthan"
+   },
+   {
+    "value": "Sikkim",
+    "label": "Sikkim"
+   },
+   {
+    "value": "Tamil_Nadu",
+    "label": "Tamil Nadu"
+   },
+   {
+    "value": "Telangana",
+    "label": "Telangana"
+   },
+   {
+    "value": "Tripura",
+    "label": "Tripura"
+   },
+   {
+    "value": "Uttar_Pradesh",
+    "label": "Uttar Pradesh"
+   },
+   {
+    "value": "Uttar_Pradesh[5]",
+    "label": "Uttar Pradesh (Allahabad)"
+   },
+   {
+    "value": "Uttarakhand",
+    "label": "Uttarakhand"
+   },
+   {
+    "value": "West_Bengal",
+    "label": "West Bengal"
+   }
+  ]
+ },
+ "city_to_states": {
+  "Adoni": [
+   "Andhra_Pradesh"
+  ],
+  "Amaravati": [
+   "Andhra_Pradesh"
+  ],
+  "Anantapur": [
+   "Andhra_Pradesh"
+  ],
+  "Anantapuram[24]": [
+   "Andhra_Pradesh"
+  ],
+  "Bhimavaram": [
+   "Andhra_Pradesh"
+  ],
+  "Chittoor[28]": [
+   "Andhra_Pradesh"
+  ],
+  "Dharmavaram": [
+   "Andhra_Pradesh"
+  ],
+  "Eluru[25]": [
+   "Andhra_Pradesh"
+  ],
+  "Gudivada": [
+   "Andhra_Pradesh"
+  ],
+  "Guntakal": [
+   "Andhra_Pradesh"
+  ],
+  "Guntur[13]": [
+   "Andhra_Pradesh"
+  ],
+  "Hindupur": [
+   "Andhra_Pradesh"
+  ],
+  "Kadapa[23]": [
+   "Andhra_Pradesh"
+  ],
+  "Kakinada": [
+   "Andhra_Pradesh"
+  ],
+  "Kavali": [
+   "Andhra_Pradesh"
+  ],
+  "Kurnool[18]": [
+   "Andhra_Pradesh"
+  ],
+  "Machilipatnam": [
+   "Andhra_Pradesh"
+  ],
+  "Madanapalle": [
+   "Andhra_Pradesh"
+  ],
+  "Nandyal": [
+   "Andhra_Pradesh"
+  ],
+  "Narasaraopet": [
+   "Andhra_Pradesh"
+  ],
+  "Nellore[14][15]": [
+   "Andhra_Pradesh"
+  ],
+  "Ongole": [
+   "Andhra_Pradesh"
+  ],
+  "Proddatur": [
+   "Andhra_Pradesh"
+  ],
+  "Rajahmundry[19][20]": [
+   "Andhra_Pradesh"
+  ],
+  "Srikakulam": [
+   "Andhra_Pradesh"
+  ],
+  "Tadepalligudem": [
+   "Andhra_Pradesh"
+  ],
+  "Tadipatri": [
+   "Andhra_Pradesh"
+  ],
+  "Tenali": [
+   "Andhra_Pradesh"
+  ],
+  "Tirupati[21][22]": [
+   "Andhra_Pradesh"
+  ],
+  "Vijayanagaram": [
+   "Andhra_Pradesh"
+  ],
+  "Vijayawada": [
+   "Andhra_Pradesh"
+  ],
+  "Visakhapatnam[4]": [
+   "Andhra_Pradesh"
+  ],
+  "Bongaigaon": [
+   "Assam"
+  ],
+  "Dibrugarh": [
+   "Assam"
+  ],
+  "Guwahati": [
+   "Assam"
+  ],
+  "Jorhat": [
+   "Assam"
+  ],
+  "Nagaon": [
+   "Assam"
+  ],
+  "Silchar": [
+   "Assam"
+  ],
+  "Tezpur": [
+   "Assam"
+  ],
+  "Tinsukia": [
+   "Assam"
+  ],
+  "Arrah": [
+   "Bihar"
+  ],
+  "Aurangabad[39]": [
+   "Bihar"
+  ],
+  "Begusarai": [
+   "Bihar"
+  ],
+  "Bettiah[33]": [
+   "Bihar"
+  ],
+  "Bhagalpur": [
+   "Bihar"
+  ],
+  "Bihar_Sharif": [
+   "Bihar"
+  ],
+  "Buxar[37]": [
+   "Bihar"
+  ],
+  "Chapra": [
+   "Bihar"
+  ],
+  "Danapur": [
+   "Bihar"
+  ],
+  "Darbhanga": [
+   "Bihar"
+  ],
+  "Dehri[30]": [
+   "Bihar"
+  ],
+  "Gaya": [
+   "Bihar"
+  ],
+  "Hajipur[31]": [
+   "Bihar"
+  ],
+  "Jamalpur[36]": [
+   "Bihar"
+  ],
+  "Jehanabad[38]": [
+   "Bihar"
+  ],
+  "Katihar": [
+   "Bihar"
+  ],
+  "Kishanganj[35]": [
+   "Bihar"
+  ],
+  "Motihari[34]": [
+   "Bihar"
+  ],
+  "Munger": [
+   "Bihar"
+  ],
+  "Muzaffarpur": [
+   "Bihar"
+  ],
+  "Patna": [
+   "Bihar"
+  ],
+  "Purnia[26]": [
+   "Bihar"
+  ],
+  "Saharsa[29]": [
+   "Bihar"
+  ],
+  "Sasaram[30]": [
+   "Bihar"
+  ],
+  "Siwan[32]": [
+   "Bihar"
+  ],
+  "Chandigarh_city": [
+   "Chandigarh"
+  ],
+  "Bhilai": [
+   "Chhattisgarh"
+  ],
+  "Bilaspur": [
+   "Chhattisgarh"
+  ],
+  "Durg": [
+   "Chhattisgarh"
+  ],
+  "Korba": [
+   "Chhattisgarh"
+  ],
+  "Raipur": [
+   "Chhattisgarh"
+  ],
+  "Bhalswa_Jahangir_Pur": [
+   "Delhi"
+  ],
+  "Delhi_city": [
+   "Delhi"
+  ],
+  "Karawal_Nagar": [
+   "Delhi"
+  ],
+  "Kirari_Suleman_Nagar": [
+   "Delhi"
+  ],
+  "Nangloi_Jat": [
+   "Delhi"
+  ],
+  "New_Delhi": [
+   "Delhi"
+  ],
+  "Sultan_Pur_Majra": [
+   "Delhi"
+  ],
+  "Ahmedabad": [
+   "Gujarat"
+  ],
+  "Anand": [
+   "Gujarat"
+  ],
+  "Bhavnagar": [
+   "Gujarat"
+  ],
+  "Gandhidham": [
+   "Gujarat"
+  ],
+  "Gandhinagar": [
+   "Gujarat"
+  ],
+  "Jamnagar": [
+   "Gujarat"
+  ],
+  "Junagadh": [
+   "Gujarat"
+  ],
+  "Mehsana": [
+   "Gujarat"
+  ],
+  "Morbi": [
+   "Gujarat"
+  ],
+  "Nadiad": [
+   "Gujarat"
+  ],
+  "Rajkot": [
+   "Gujarat"
+  ],
+  "Surat": [
+   "Gujarat"
+  ],
+  "Surendranagar_Dudhrej": [
+   "Gujarat"
+  ],
+  "Vadodara": [
+   "Gujarat"
+  ],
+  "Ambala": [
+   "Haryana"
+  ],
+  "Bhiwani": [
+   "Haryana"
+  ],
+  "Faridabad": [
+   "Haryana"
+  ],
+  "Gurgaon": [
+   "Haryana"
+  ],
+  "Karnal": [
+   "Haryana"
+  ],
+  "Panchkula": [
+   "Haryana"
+  ],
+  "Panipat": [
+   "Haryana"
+  ],
+  "Rohtak": [
+   "Haryana"
+  ],
+  "Sirsa": [
+   "Haryana"
+  ],
+  "Sonipat": [
+   "Haryana"
+  ],
+  "Yamunanagar": [
+   "Haryana"
+  ],
+  "Shimla": [
+   "Himachal_Pradesh"
+  ],
+  "Jammu[16]": [
+   "Jammu_and_Kashmir"
+  ],
+  "Srinagar": [
+   "Jammu_and_Kashmir"
+  ],
+  "Bokaro": [
+   "Jharkhand"
+  ],
+  "Deoghar": [
+   "Jharkhand"
+  ],
+  "Dhanbad": [
+   "Jharkhand"
+  ],
+  "Giridih": [
+   "Jharkhand"
+  ],
+  "Hazaribagh": [
+   "Jharkhand"
+  ],
+  "Jamshedpur": [
+   "Jharkhand"
+  ],
+  "Mango": [
+   "Jharkhand"
+  ],
+  "Medininagar": [
+   "Jharkhand"
+  ],
+  "Phusro": [
+   "Jharkhand"
+  ],
+  "Ramgarh": [
+   "Jharkhand"
+  ],
+  "Ranchi": [
+   "Jharkhand"
+  ],
+  "Bangalore": [
+   "Karnataka"
+  ],
+  "Belgaum": [
+   "Karnataka"
+  ],
+  "Bellary": [
+   "Karnataka"
+  ],
+  "Bidar": [
+   "Karnataka"
+  ],
+  "Bijapur": [
+   "Karnataka"
+  ],
+  "Davanagere": [
+   "Karnataka"
+  ],
+  "Gulbarga": [
+   "Karnataka"
+  ],
+  "Hospet": [
+   "Karnataka"
+  ],
+  "Hubli\u00e2\u20ac\u201cDharwad": [
+   "Karnataka"
+  ],
+  "Mangalore": [
+   "Karnataka"
+  ],
+  "Mysore[7][8][9]": [
+   "Karnataka"
+  ],
+  "Raichur": [
+   "Karnataka"
+  ],
+  "Shimoga": [
+   "Karnataka"
+  ],
+  "Tumkur": [
+   "Karnataka"
+  ],
+  "Udupi": [
+   "Karnataka"
+  ],
+  "Alappuzha": [
+   "Kerala"
+  ],
+  "Kochi": [
+   "Kerala"
+  ],
+  "Kollam": [
+   "Kerala"
+  ],
+  "Kottayam": [
+   "Kerala"
+  ],
+  "Kozhikode": [
+   "Kerala"
+  ],
+  "Thiruvananthapuram": [
+   "Kerala"
+  ],
+  "Thrissur": [
+   "Kerala"
+  ],
+  "Bhind": [
+   "Madhya_Pradesh"
+  ],
+  "Bhopal": [
+   "Madhya_Pradesh"
+  ],
+  "Burhanpur": [
+   "Madhya_Pradesh"
+  ],
+  "Dewas": [
+   "Madhya_Pradesh"
+  ],
+  "Guna": [
+   "Madhya_Pradesh"
+  ],
+  "Gwalior": [
+   "Madhya_Pradesh"
+  ],
+  "Indore": [
+   "Madhya_Pradesh"
+  ],
+  "Jabalpur": [
+   "Madhya_Pradesh"
+  ],
+  "Katni": [
+   "Madhya_Pradesh"
+  ],
+  "Khandwa": [
+   "Madhya_Pradesh"
+  ],
+  "Morena": [
+   "Madhya_Pradesh"
+  ],
+  "Ratlam": [
+   "Madhya_Pradesh"
+  ],
+  "Rewa": [
+   "Madhya_Pradesh"
+  ],
+  "Sagar": [
+   "Madhya_Pradesh"
+  ],
+  "Satna": [
+   "Madhya_Pradesh"
+  ],
+  "Shivpuri": [
+   "Madhya_Pradesh"
+  ],
+  "Singrauli": [
+   "Madhya_Pradesh"
+  ],
+  "Ujjain": [
+   "Madhya_Pradesh"
+  ],
+  "Ahmednagar": [
+   "Maharashtra"
+  ],
+  "Akola": [
+   "Maharashtra"
+  ],
+  "Ambarnath": [
+   "Maharashtra"
+  ],
+  "Amravati": [
+   "Maharashtra"
+  ],
+  "Aurangabad": [
+   "Maharashtra"
+  ],
+  "Bhiwandi": [
+   "Maharashtra"
+  ],
+  "Bhusawal": [
+   "Maharashtra"
+  ],
+  "Chandrapur": [
+   "Maharashtra"
+  ],
+  "Dhule": [
+   "Maharashtra"
+  ],
+  "Ichalkaranji": [
+   "Maharashtra"
+  ],
+  "Jalgaon": [
+   "Maharashtra"
+  ],
+  "Jalna": [
+   "Maharashtra"
+  ],
+  "Kalyan-Dombivli": [
+   "Maharashtra"
+  ],
+  "Kolhapur": [
+   "Maharashtra"
+  ],
+  "Latur": [
+   "Maharashtra"
+  ],
+  "Malegaon": [
+   "Maharashtra"
+  ],
+  "Mira-Bhayandar": [
+   "Maharashtra"
+  ],
+  "Mumbai": [
+   "Maharashtra"
+  ],
+  "Nagpur": [
+   "Maharashtra"
+  ],
+  "Nanded": [
+   "Maharashtra"
+  ],
+  "Nashik": [
+   "Maharashtra"
+  ],
+  "Navi_Mumbai": [
+   "Maharashtra"
+  ],
+  "Panvel": [
+   "Maharashtra"
+  ],
+  "Parbhani": [
+   "Maharashtra"
+  ],
+  "Pimpri-Chinchwad": [
+   "Maharashtra"
+  ],
+  "Pune": [
+   "Maharashtra"
+  ],
+  "Sangli-Miraj_&_Kupwad": [
+   "Maharashtra"
+  ],
+  "Satara": [
+   "Maharashtra"
+  ],
+  "Solapur": [
+   "Maharashtra"
+  ],
+  "Thane": [
+   "Maharashtra"
+  ],
+  "Ulhasnagar": [
+   "Maharashtra"
+  ],
+  "Vasai-Virar": [
+   "Maharashtra"
+  ],
+  "Imphal": [
+   "Manipur"
+  ],
+  "Aizawl": [
+   "Mizoram"
+  ],
+  "Berhampur": [
+   "Odisha"
+  ],
+  "Bhubaneswar": [
+   "Odisha"
+  ],
+  "Cuttack": [
+   "Odisha"
+  ],
+  "Raurkela_Industrial_Township": [
+   "Odisha"
+  ],
+  "Rourkela": [
+   "Odisha"
+  ],
+  "Sambalpur": [
+   "Odisha"
+  ],
+  "Ozhukarai": [
+   "Puducherry"
+  ],
+  "Pondicherry": [
+   "Puducherry"
+  ],
+  "Amritsar": [
+   "Punjab"
+  ],
+  "Bathinda": [
+   "Punjab"
+  ],
+  "Jalandhar": [
+   "Punjab"
+  ],
+  "Ludhiana": [
+   "Punjab"
+  ],
+  "Patiala": [
+   "Punjab"
+  ],
+  "Phagwara": [
+   "Punjab"
+  ],
+  "Ajmer": [
+   "Rajasthan"
+  ],
+  "Alwar": [
+   "Rajasthan"
+  ],
+  "Bharatpur": [
+   "Rajasthan"
+  ],
+  "Bhilwara": [
+   "Rajasthan"
+  ],
+  "Bikaner": [
+   "Rajasthan"
+  ],
+  "Jaipur": [
+   "Rajasthan"
+  ],
+  "Jodhpur": [
+   "Rajasthan"
+  ],
+  "Kota[6]": [
+   "Rajasthan"
+  ],
+  "Pali": [
+   "Rajasthan"
+  ],
+  "Sikar": [
+   "Rajasthan"
+  ],
+  "Sri_Ganganagar": [
+   "Rajasthan"
+  ],
+  "Udaipur": [
+   "Rajasthan"
+  ],
+  "Gangtok": [
+   "Sikkim"
+  ],
+  "Ambattur": [
+   "Tamil_Nadu"
+  ],
+  "Avadi": [
+   "Tamil_Nadu"
+  ],
+  "Chennai": [
+   "Tamil_Nadu"
+  ],
+  "Coimbatore": [
+   "Tamil_Nadu"
+  ],
+  "Dindigul": [
+   "Tamil_Nadu"
+  ],
+  "Erode[17]": [
+   "Tamil_Nadu"
+  ],
+  "Hosur": [
+   "Tamil_Nadu"
+  ],
+  "Karaikudi": [
+   "Tamil_Nadu"
+  ],
+  "Kumbakonam": [
+   "Tamil_Nadu"
+  ],
+  "Madurai": [
+   "Tamil_Nadu"
+  ],
+  "Nagercoil": [
+   "Tamil_Nadu"
+  ],
+  "Pallavaram": [
+   "Tamil_Nadu"
+  ],
+  "Pudukkottai": [
+   "Tamil_Nadu"
+  ],
+  "Salem": [
+   "Tamil_Nadu"
+  ],
+  "Thanjavur": [
+   "Tamil_Nadu"
+  ],
+  "Thoothukudi": [
+   "Tamil_Nadu"
+  ],
+  "Tiruchirappalli[10]": [
+   "Tamil_Nadu"
+  ],
+  "Tirunelveli": [
+   "Tamil_Nadu"
+  ],
+  "Tiruppur": [
+   "Tamil_Nadu"
+  ],
+  "Tiruvottiyur": [
+   "Tamil_Nadu"
+  ],
+  "Vellore": [
+   "Tamil_Nadu"
+  ],
+  "Hyderabad": [
+   "Telangana"
+  ],
+  "Karimnagar": [
+   "Telangana"
+  ],
+  "Khammam": [
+   "Telangana"
+  ],
+  "Mahbubnagar": [
+   "Telangana"
+  ],
+  "Miryalaguda": [
+   "Telangana"
+  ],
+  "Nizamabad": [
+   "Telangana"
+  ],
+  "Ramagundam[27]": [
+   "Telangana"
+  ],
+  "Secunderabad": [
+   "Telangana"
+  ],
+  "Suryapet": [
+   "Telangana"
+  ],
+  "Warangal[11][12]": [
+   "Telangana"
+  ],
+  "Agartala": [
+   "Tripura"
+  ],
+  "Agra": [
+   "Uttar_Pradesh"
+  ],
+  "Aligarh": [
+   "Uttar_Pradesh"
+  ],
+  "Amroha": [
+   "Uttar_Pradesh"
+  ],
+  "Bahraich": [
+   "Uttar_Pradesh"
+  ],
+  "Ballia": [
+   "Uttar_Pradesh"
+  ],
+  "Bareilly": [
+   "Uttar_Pradesh"
+  ],
+  "Bulandshahr": [
+   "Uttar_Pradesh"
+  ],
+  "Etawah": [
+   "Uttar_Pradesh"
+  ],
+  "Farrukhabad": [
+   "Uttar_Pradesh"
+  ],
+  "Fatehpur": [
+   "Uttar_Pradesh"
+  ],
+  "Firozabad": [
+   "Uttar_Pradesh"
+  ],
+  "Ghaziabad": [
+   "Uttar_Pradesh"
+  ],
+  "Gorakhpur": [
+   "Uttar_Pradesh"
+  ],
+  "Hapur": [
+   "Uttar_Pradesh"
+  ],
+  "Jaunpur": [
+   "Uttar_Pradesh"
+  ],
+  "Jhansi": [
+   "Uttar_Pradesh"
+  ],
+  "Kanpur": [
+   "Uttar_Pradesh"
+  ],
+  "Khora,_Ghaziabad": [
+   "Uttar_Pradesh"
+  ],
+  "Loni": [
+   "Uttar_Pradesh"
+  ],
+  "Lucknow": [
+   "Uttar_Pradesh"
+  ],
+  "Mathura": [
+   "Uttar_Pradesh"
+  ],
+  "Mau": [
+   "Uttar_Pradesh"
+  ],
+  "Meerut": [
+   "Uttar_Pradesh"
+  ],
+  "Mirzapur": [
+   "Uttar_Pradesh"
+  ],
+  "Moradabad": [
+   "Uttar_Pradesh"
+  ],
+  "Muzaffarnagar": [
+   "Uttar_Pradesh"
+  ],
+  "Noida": [
+   "Uttar_Pradesh"
+  ],
+  "Orai": [
+   "Uttar_Pradesh"
+  ],
+  "Raebareli": [
+   "Uttar_Pradesh"
+  ],
+  "Rampur": [
+   "Uttar_Pradesh"
+  ],
+  "Saharanpur": [
+   "Uttar_Pradesh"
+  ],
+  "Sambhal": [
+   "Uttar_Pradesh"
+  ],
+  "Shahjahanpur": [
+   "Uttar_Pradesh"
+  ],
+  "Unnao": [
+   "Uttar_Pradesh"
+  ],
+  "Varanasi": [
+   "Uttar_Pradesh"
+  ],
+  "Allahabad": [
+   "Uttar_Pradesh[5]"
+  ],
+  "Dehradun": [
+   "Uttarakhand"
+  ],
+  "Haridwar": [
+   "Uttarakhand"
+  ],
+  "Asansol": [
+   "West_Bengal"
+  ],
+  "Bally": [
+   "West_Bengal"
+  ],
+  "Baranagar": [
+   "West_Bengal"
+  ],
+  "Barasat": [
+   "West_Bengal"
+  ],
+  "Bardhaman": [
+   "West_Bengal"
+  ],
+  "Berhampore": [
+   "West_Bengal"
+  ],
+  "Bhatpara": [
+   "West_Bengal"
+  ],
+  "Bidhannagar": [
+   "West_Bengal"
+  ],
+  "Chinsurah": [
+   "West_Bengal"
+  ],
+  "Durgapur": [
+   "West_Bengal"
+  ],
+  "Gopalpur": [
+   "West_Bengal"
+  ],
+  "Haldia": [
+   "West_Bengal"
+  ],
+  "Howrah": [
+   "West_Bengal"
+  ],
+  "Kamarhati": [
+   "West_Bengal"
+  ],
+  "Kharagpur": [
+   "West_Bengal"
+  ],
+  "Kolkata": [
+   "West_Bengal"
+  ],
+  "Kulti": [
+   "West_Bengal"
+  ],
+  "Madhyamgram": [
+   "West_Bengal"
+  ],
+  "Maheshtala": [
+   "West_Bengal"
+  ],
+  "Malda": [
+   "West_Bengal"
+  ],
+  "Naihati": [
+   "West_Bengal"
+  ],
+  "North_Dumdum": [
+   "West_Bengal"
+  ],
+  "Panihati": [
+   "West_Bengal"
+  ],
+  "Raiganj": [
+   "West_Bengal"
+  ],
+  "Rajpur_Sonarpur": [
+   "West_Bengal"
+  ],
+  "Serampore": [
+   "West_Bengal"
+  ],
+  "Siliguri": [
+   "West_Bengal"
+  ],
+  "South_Dumdum": [
+   "West_Bengal"
+  ],
+  "Uluberia": [
+   "West_Bengal"
+  ]
+ },
+ "state_to_cities": {
+  "Andhra_Pradesh": [
+   "Adoni",
+   "Amaravati",
+   "Anantapur",
+   "Anantapuram[24]",
+   "Bhimavaram",
+   "Chittoor[28]",
+   "Dharmavaram",
+   "Eluru[25]",
+   "Gudivada",
+   "Guntakal",
+   "Guntur[13]",
+   "Hindupur",
+   "Kadapa[23]",
+   "Kakinada",
+   "Kavali",
+   "Kurnool[18]",
+   "Machilipatnam",
+   "Madanapalle",
+   "Nandyal",
+   "Narasaraopet",
+   "Nellore[14][15]",
+   "Ongole",
+   "Proddatur",
+   "Rajahmundry[19][20]",
+   "Srikakulam",
+   "Tadepalligudem",
+   "Tadipatri",
+   "Tenali",
+   "Tirupati[21][22]",
+   "Vijayanagaram",
+   "Vijayawada",
+   "Visakhapatnam[4]"
+  ],
+  "Assam": [
+   "Bongaigaon",
+   "Dibrugarh",
+   "Guwahati",
+   "Jorhat",
+   "Nagaon",
+   "Silchar",
+   "Tezpur",
+   "Tinsukia"
+  ],
+  "Bihar": [
+   "Arrah",
+   "Aurangabad[39]",
+   "Begusarai",
+   "Bettiah[33]",
+   "Bhagalpur",
+   "Bihar_Sharif",
+   "Buxar[37]",
+   "Chapra",
+   "Danapur",
+   "Darbhanga",
+   "Dehri[30]",
+   "Gaya",
+   "Hajipur[31]",
+   "Jamalpur[36]",
+   "Jehanabad[38]",
+   "Katihar",
+   "Kishanganj[35]",
+   "Motihari[34]",
+   "Munger",
+   "Muzaffarpur",
+   "Patna",
+   "Purnia[26]",
+   "Saharsa[29]",
+   "Sasaram[30]",
+   "Siwan[32]"
+  ],
+  "Chandigarh": [
+   "Chandigarh_city"
+  ],
+  "Chhattisgarh": [
+   "Bhilai",
+   "Bilaspur",
+   "Durg",
+   "Korba",
+   "Raipur"
+  ],
+  "Delhi": [
+   "Bhalswa_Jahangir_Pur",
+   "Delhi_city",
+   "Karawal_Nagar",
+   "Kirari_Suleman_Nagar",
+   "Nangloi_Jat",
+   "New_Delhi",
+   "Sultan_Pur_Majra"
+  ],
+  "Gujarat": [
+   "Ahmedabad",
+   "Anand",
+   "Bhavnagar",
+   "Gandhidham",
+   "Gandhinagar",
+   "Jamnagar",
+   "Junagadh",
+   "Mehsana",
+   "Morbi",
+   "Nadiad",
+   "Rajkot",
+   "Surat",
+   "Surendranagar_Dudhrej",
+   "Vadodara"
+  ],
+  "Haryana": [
+   "Ambala",
+   "Bhiwani",
+   "Faridabad",
+   "Gurgaon",
+   "Karnal",
+   "Panchkula",
+   "Panipat",
+   "Rohtak",
+   "Sirsa",
+   "Sonipat",
+   "Yamunanagar"
+  ],
+  "Himachal_Pradesh": [
+   "Shimla"
+  ],
+  "Jammu_and_Kashmir": [
+   "Jammu[16]",
+   "Srinagar"
+  ],
+  "Jharkhand": [
+   "Bokaro",
+   "Deoghar",
+   "Dhanbad",
+   "Giridih",
+   "Hazaribagh",
+   "Jamshedpur",
+   "Mango",
+   "Medininagar",
+   "Phusro",
+   "Ramgarh",
+   "Ranchi"
+  ],
+  "Karnataka": [
+   "Bangalore",
+   "Belgaum",
+   "Bellary",
+   "Bidar",
+   "Bijapur",
+   "Davanagere",
+   "Gulbarga",
+   "Hospet",
+   "Hubli\u00e2\u20ac\u201cDharwad",
+   "Mangalore",
+   "Mysore[7][8][9]",
+   "Raichur",
+   "Shimoga",
+   "Tumkur",
+   "Udupi"
+  ],
+  "Kerala": [
+   "Alappuzha",
+   "Kochi",
+   "Kollam",
+   "Kottayam",
+   "Kozhikode",
+   "Thiruvananthapuram",
+   "Thrissur"
+  ],
+  "Madhya_Pradesh": [
+   "Bhind",
+   "Bhopal",
+   "Burhanpur",
+   "Dewas",
+   "Guna",
+   "Gwalior",
+   "Indore",
+   "Jabalpur",
+   "Katni",
+   "Khandwa",
+   "Morena",
+   "Ratlam",
+   "Rewa",
+   "Sagar",
+   "Satna",
+   "Shivpuri",
+   "Singrauli",
+   "Ujjain"
+  ],
+  "Maharashtra": [
+   "Ahmednagar",
+   "Akola",
+   "Ambarnath",
+   "Amravati",
+   "Aurangabad",
+   "Bhiwandi",
+   "Bhusawal",
+   "Chandrapur",
+   "Dhule",
+   "Ichalkaranji",
+   "Jalgaon",
+   "Jalna",
+   "Kalyan-Dombivli",
+   "Kolhapur",
+   "Latur",
+   "Malegaon",
+   "Mira-Bhayandar",
+   "Mumbai",
+   "Nagpur",
+   "Nanded",
+   "Nashik",
+   "Navi_Mumbai",
+   "Panvel",
+   "Parbhani",
+   "Pimpri-Chinchwad",
+   "Pune",
+   "Sangli-Miraj_&_Kupwad",
+   "Satara",
+   "Solapur",
+   "Thane",
+   "Ulhasnagar",
+   "Vasai-Virar"
+  ],
+  "Manipur": [
+   "Imphal"
+  ],
+  "Mizoram": [
+   "Aizawl"
+  ],
+  "Odisha": [
+   "Berhampur",
+   "Bhubaneswar",
+   "Cuttack",
+   "Raurkela_Industrial_Township",
+   "Rourkela",
+   "Sambalpur"
+  ],
+  "Puducherry": [
+   "Ozhukarai",
+   "Pondicherry"
+  ],
+  "Punjab": [
+   "Amritsar",
+   "Bathinda",
+   "Jalandhar",
+   "Ludhiana",
+   "Patiala",
+   "Phagwara"
+  ],
+  "Rajasthan": [
+   "Ajmer",
+   "Alwar",
+   "Bharatpur",
+   "Bhilwara",
+   "Bikaner",
+   "Jaipur",
+   "Jodhpur",
+   "Kota[6]",
+   "Pali",
+   "Sikar",
+   "Sri_Ganganagar",
+   "Udaipur"
+  ],
+  "Sikkim": [
+   "Gangtok"
+  ],
+  "Tamil_Nadu": [
+   "Ambattur",
+   "Avadi",
+   "Chennai",
+   "Coimbatore",
+   "Dindigul",
+   "Erode[17]",
+   "Hosur",
+   "Karaikudi",
+   "Kumbakonam",
+   "Madurai",
+   "Nagercoil",
+   "Pallavaram",
+   "Pudukkottai",
+   "Salem",
+   "Thanjavur",
+   "Thoothukudi",
+   "Tiruchirappalli[10]",
+   "Tirunelveli",
+   "Tiruppur",
+   "Tiruvottiyur",
+   "Vellore"
+  ],
+  "Telangana": [
+   "Hyderabad",
+   "Karimnagar",
+   "Khammam",
+   "Mahbubnagar",
+   "Miryalaguda",
+   "Nizamabad",
+   "Ramagundam[27]",
+   "Secunderabad",
+   "Suryapet",
+   "Warangal[11][12]"
+  ],
+  "Tripura": [
+   "Agartala"
+  ],
+  "Uttar_Pradesh": [
+   "Agra",
+   "Aligarh",
+   "Amroha",
+   "Bahraich",
+   "Ballia",
+   "Bareilly",
+   "Bulandshahr",
+   "Etawah",
+   "Farrukhabad",
+   "Fatehpur",
+   "Firozabad",
+   "Ghaziabad",
+   "Gorakhpur",
+   "Hapur",
+   "Jaunpur",
+   "Jhansi",
+   "Kanpur",
+   "Khora,_Ghaziabad",
+   "Loni",
+   "Lucknow",
+   "Mathura",
+   "Mau",
+   "Meerut",
+   "Mirzapur",
+   "Moradabad",
+   "Muzaffarnagar",
+   "Noida",
+   "Orai",
+   "Raebareli",
+   "Rampur",
+   "Saharanpur",
+   "Sambhal",
+   "Shahjahanpur",
+   "Unnao",
+   "Varanasi"
+  ],
+  "Uttar_Pradesh[5]": [
+   "Allahabad"
+  ],
+  "Uttarakhand": [
+   "Dehradun",
+   "Haridwar"
+  ],
+  "West_Bengal": [
+   "Asansol",
+   "Bally",
+   "Baranagar",
+   "Barasat",
+   "Bardhaman",
+   "Berhampore",
+   "Bhatpara",
+   "Bidhannagar",
+   "Chinsurah",
+   "Durgapur",
+   "Gopalpur",
+   "Haldia",
+   "Howrah",
+   "Kamarhati",
+   "Kharagpur",
+   "Kolkata",
+   "Kulti",
+   "Madhyamgram",
+   "Maheshtala",
+   "Malda",
+   "Naihati",
+   "North_Dumdum",
+   "Panihati",
+   "Raiganj",
+   "Rajpur_Sonarpur",
+   "Serampore",
+   "Siliguri",
+   "South_Dumdum",
+   "Uluberia"
+  ]
+ },
+ "ranges": {
+  "Income": {
+   "min": 10310.0,
+   "max": 9999938.0
+  },
+  "Age": {
+   "min": 21.0,
+   "max": 79.0
+  },
+  "Experience": {
+   "min": 0.0,
+   "max": 20.0
+  },
+  "CURRENT_JOB_YRS": {
+   "min": 0.0,
+   "max": 14.0
+  },
+  "CURRENT_HOUSE_YRS": {
+   "min": 10.0,
+   "max": 14.0
+  }
+ },
+ "medians": {
+  "Income": 4995311.0,
+  "Age": 50.0,
+  "Experience": 10.0,
+  "CURRENT_JOB_YRS": 6.0,
+  "CURRENT_HOUSE_YRS": 12.0,
+  "Income_per_Experience": 451448.45,
+  "Career_Stability": 18.0,
+  "Experience_Ratio": 0.203125,
+  "Financial_Maturity": 270.0,
+  "Career_Start_Age": 40.0
+ },
+ "baselines": {
+  "Married/Single": "married",
+  "House_Ownership": "norent_noown",
+  "Car_Ownership": "no",
+  "Profession": "Air_traffic_controller",
+  "CITY": "Adoni",
+  "STATE": "Andhra_Pradesh",
+  "Age_Group": "20s"
+ },
+ "metrics": {
+  "accuracy": 0.8929563492063493,
+  "precision": 0.5461220743460303,
+  "recall": 0.7678657848040007,
+  "f1": 0.6382836071069393,
+  "roc_auc": 0.9366397213766312
+ },
+ "metrics_note": "Hold-out test split (20%, stratified, random_state=42). The sprint notebook reported ROC AUC 0.851, which was a stale XGBoost probability vector; the value here is the Random Forest's own ROC AUC."
+}

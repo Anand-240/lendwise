@@ -1,0 +1,234 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --color-navy: var(--navy);
+  --color-navy-800: var(--navy-800);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-line: var(--brand-line);
+  --color-brand-deep: var(--brand-deep);
+  --color-gold: var(--gold);
+  --color-gold-hover: var(--gold-hover);
+  --color-gold-light: var(--gold-light);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* LendWise design tokens (light theme). Navy primary, blue brand accent. */
+:root {
+  --navy: #1C1917;
+  --navy-800: #292524;
+  /* Accent: bronze for text, borders and small fills (5.4:1 on white); gold for primary CTAs. */
+  --brand: #8a6417;
+  --brand-foreground: #ffffff;
+  --brand-soft: #faf5e9;
+  --brand-line: #eadcb6;
+  --brand-deep: #5c430f;
+  --gold: #c99a2e;
+  --gold-hover: #b8892a;
+  --gold-light: #e6c878;
+  --success: #059669;
+  --success-soft: #ecfdf5;
+  --danger: #e11d48;
+  --danger-soft: #fff1f2;
+  --warning: #d97706;
+  --warning-soft: #fffbeb;
+
+  --background: #ffffff;
+  --foreground: #1C1917;
+  --card: #ffffff;
+  --card-foreground: #1C1917;
+  --popover: #ffffff;
+  --popover-foreground: #1C1917;
+  --primary: #1C1917;
+  --primary-foreground: #ffffff;
+  --secondary: #F5F5F4;
+  --secondary-foreground: #1C1917;
+  --muted: #F5F5F4;
+  --muted-foreground: #57534E;
+  --accent: #faf5e9;
+  --accent-foreground: #5c430f;
+  --destructive: #e11d48;
+  --border: #E7E5E4;
+  --input: #D6D3D1;
+  --ring: #a87a1f;
+  --chart-1: #44403C;
+  --chart-2: #059669;
+  --chart-3: #e11d48;
+  --chart-4: #d97706;
+  --chart-5: #1C1917;
+  --radius: 0.5rem;
+  --sidebar: #FAFAF9;
+  --sidebar-foreground: #1C1917;
+  --sidebar-primary: #1C1917;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #faf5e9;
+  --sidebar-accent-foreground: #5c430f;
+  --sidebar-border: #E7E5E4;
+  --sidebar-ring: #a87a1f;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply antialiased;
+    font-variant-numeric: lining-nums;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  h1, h2, h3, h4 {
+    @apply tracking-tight text-balance;
+  }
+}
+
+@utility container-page {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 80rem;
+  padding-inline: 1rem;
+  @media (width >= 40rem) {
+    padding-inline: 1.5rem;
+  }
+  @media (width >= 64rem) {
+    padding-inline: 2rem;
+  }
+}
+
+@keyframes lw-draw {
+  from { stroke-dashoffset: var(--len, 100); }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes lw-pop {
+  0% { transform: scale(0.6); opacity: 0; }
+  70% { transform: scale(1.06); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.lw-draw { stroke-dasharray: var(--len, 100); stroke-dashoffset: var(--len, 100); animation: lw-draw 0.7s 0.25s ease-out forwards; }
+.lw-pop { animation: lw-pop 0.5s ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .lw-draw { stroke-dashoffset: 0; }
+}
+
+@media print {
+  @page { margin: 14mm; }
+  body { background: #fff !important; }
+  .no-print { display: none !important; }
+}
+
+/* Native range slider styled to the brand (lighter than a JS slider, accessible by default). */
+.lw-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 1.5rem;
+  background: transparent;
+  cursor: pointer;
+}
+.lw-range::-webkit-slider-runnable-track {
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: linear-gradient(to right, var(--brand) var(--fill, 50%), #E7E5E4 var(--fill, 50%));
+}
+.lw-range::-moz-range-track {
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: linear-gradient(to right, var(--brand) var(--fill, 50%), #E7E5E4 var(--fill, 50%));
+}
+.lw-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  margin-top: -0.375rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  background: #fff;
+  border: 2px solid var(--brand);
+  box-shadow: 0 1px 3px rgb(28 25 23 / 0.2);
+}
+.lw-range::-moz-range-thumb {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  background: #fff;
+  border: 2px solid var(--brand);
+}
+.lw-range:focus-visible {
+  outline: none;
+}
+.lw-range:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 4px rgb(168 122 31 / 0.35);
+}
+.lw-range:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 4px rgb(168 122 31 / 0.35);
+}
