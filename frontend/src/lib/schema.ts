@@ -1,6 +1,6 @@
 import { z } from "@/lib/zod";
 import type { Metadata } from "./types";
-import { PURPOSES } from "./site";
+import { PHONE_OTP_ENABLED, PURPOSES } from "./site";
 
 const int = (label: string) =>
   z
@@ -32,7 +32,9 @@ export function buildApplicationSchema(md: Metadata) {
       .string()
       .trim()
       .regex(/^[6-9]\d{9}$/, "Enter a 10-digit Indian mobile number starting with 6–9"),
-    phone_verification_token: z.string({ error: "Verify your mobile number to continue" }).min(1, "Verify your mobile number to continue"),
+    phone_verification_token: PHONE_OTP_ENABLED
+      ? z.string({ error: "Verify your mobile number to continue" }).min(1, "Verify your mobile number to continue")
+      : z.string().optional(),
     age: int("Age").pipe(z.number().min(21, "You must be at least 21").max(79, "Age must be 79 or below")),
     marital_status: oneOf(set("marital_status"), "marital status"),
     // Step 2

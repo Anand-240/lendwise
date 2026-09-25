@@ -27,7 +27,7 @@ import { PhoneVerify } from "./phone-verify";
 import { buildApplicationSchema, rangeWarnings, STEP_FIELDS, type ApplicationForm } from "@/lib/schema";
 import { calculateEmi } from "@/lib/emi";
 import { formatINR, formatLakhCrore, formatTenure } from "@/lib/format";
-import { PURPOSES } from "@/lib/site";
+import { PHONE_OTP_ENABLED, PURPOSES } from "@/lib/site";
 import type { ApiError, Metadata } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -341,6 +341,7 @@ export function ApplyWizard({ metadata }: { metadata: Metadata }) {
                     />
                   </div>
                 </Field>
+                {PHONE_OTP_ENABLED && (
                 <div className="md:col-span-2" id={fieldIds("phone_verification_token").input} tabIndex={-1}>
                   <PhoneVerify
                     phone={values.phone}
@@ -354,6 +355,7 @@ export function ApplyWizard({ metadata }: { metadata: Metadata }) {
                     </p>
                   )}
                 </div>
+                )}
                 <Field name="age" label="Age" tooltip="Applicants must be between 21 and 79 years old." hint="21 – 79 years" error={err("age")}>
                   <Input min={21} max={79} placeholder="e.g. 32" {...numberProps("age", true)} />
                 </Field>
@@ -576,7 +578,7 @@ export function ApplyWizard({ metadata }: { metadata: Metadata }) {
                 <ReviewSection title="Personal details" onEdit={() => setStep(0)}>
                   <ReviewItem label="Full name" value={values.full_name} />
                   <ReviewItem label="Email" value={values.email} />
-                  <ReviewItem label="Mobile" value={values.phone ? `+91 ${values.phone} · verified` : undefined} />
+                  <ReviewItem label="Mobile" value={values.phone ? `+91 ${values.phone}${PHONE_OTP_ENABLED ? " · verified" : ""}` : undefined} />
                   <ReviewItem label="Age" value={values.age} />
                   <ReviewItem label="Marital status" value={labelOf("marital_status", values.marital_status)} />
                 </ReviewSection>

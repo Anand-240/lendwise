@@ -19,4 +19,8 @@ export const UTILITY_LINKS = [
   { href: "/admin/login", label: "Officer login" },
 ];
 
+// Mobile OTP verification step. Turned off for now; the backend must also have
+// REQUIRE_PHONE_VERIFICATION=false while this is false.
+export const PHONE_OTP_ENABLED = false;
+
 export const PURPOSES = ["Personal", "Home", "Vehicle", "Education", "Business", "Medical", "Other"] as const;

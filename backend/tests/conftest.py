@@ -10,6 +10,8 @@ os.environ.setdefault("ADMIN_EMAIL", "officer@test.dev")
 os.environ.setdefault("ADMIN_PASSWORD", "Sup3r-Secret!")
 os.environ.setdefault("RATE_LIMIT_PER_MINUTE", "1000")
 os.environ.setdefault("RATE_LIMIT_GLOBAL_PER_MINUTE", "5000")
+# Tests exercise the OTP rules regardless of the local .env setting.
+os.environ["REQUIRE_PHONE_VERIFICATION"] = "true"
 
 ARTIFACTS = BACKEND / "app" / "ml" / "artifacts"
 HAS_MODEL = (ARTIFACTS / "model.pkl").exists() and (ARTIFACTS / "scaler.pkl").exists()

@@ -782,7 +782,7 @@ function ApplicationDrawer({
   const rows: [string, React.ReactNode][] = a
     ? [
         ["Email", a.email],
-        ["Phone", `${a.phone}${a.phone_verified ? " · verified" : " · not verified"}`],
+        ["Phone", `${a.phone}${a.phone_verified ? " · verified" : ""}`],
         ["Age", a.age],
         ["Marital status", a.marital_status],
         ["Profession", a.profession.replace(/_/g, " ")],
