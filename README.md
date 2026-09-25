@@ -201,7 +201,8 @@ Errors always look like `{"error": {"code", "message", "details": [{field, messa
 **Backend → Render / Railway (≥ 1 GB RAM instance)**
 - Root directory `backend/`, Docker deploy using `backend/Dockerfile`.
 - Provide the model: commit it with Git LFS, bake it into the image, or set `MODEL_URL` (+ `MODEL_SHA256`) to a private download link.
-- Attach a persistent disk mounted at `/data` (SQLite lives at `/data/lendwise.db`) — or point `DATABASE_URL` at Postgres (add a driver such as `psycopg[binary]`).
+- Database: set `DATABASE_URL` to Postgres. For Supabase, use **Connect → Direct → Session pooler** (IPv4-compatible). `postgresql://` URLs are accepted as-is; the driver (`psycopg`) and `sslmode=require` are applied automatically, and tables are created on first start. Without Postgres, attach a persistent disk at `/data` for SQLite.
+- Memory: the API peaks at about 340 MB with the model loaded, so a 512 MB instance is enough (1 GB gives headroom).
 - Set `JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `CORS_ORIGINS=https://<your-vercel-domain>`.
 - Keep the API reachable only by the frontend if possible. The per-IP limiter uses the client IP forwarded by the Next.js server (`x-real-ip` / `X-Forwarded-For`), which is trustworthy behind Vercel or a load balancer; a global per-minute cap backs it up when self-hosting.
 

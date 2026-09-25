@@ -17,6 +17,9 @@ def _make_engine(url: str):
         kwargs["connect_args"] = {"check_same_thread": False}
         if ":memory:" in url:
             kwargs["poolclass"] = StaticPool
+    else:
+        # Poolers (e.g. Supabase) close idle connections; check and recycle them.
+        kwargs.update(pool_pre_ping=True, pool_recycle=300, pool_size=5, max_overflow=5)
     return create_engine(url, **kwargs)
 
 
@@ -48,7 +51,8 @@ def _add_missing_columns() -> None:
                 default = ""
                 if col.default is not None and col.default.is_scalar:
                     value = col.default.arg
-                    default = f" DEFAULT {int(value) if isinstance(value, bool) else repr(value)}"
+                    literal = ("TRUE" if value else "FALSE") if isinstance(value, bool) else repr(value)
+                    default = f" DEFAULT {literal}"
                 conn.execute(text(f'ALTER TABLE {table.name} ADD COLUMN {col.name} {ddl_type}{default}'))
 
 

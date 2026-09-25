@@ -72,13 +72,26 @@ class Settings(BaseSettings):
 
     @property
     def resolved_database_url(self) -> str:
+        url = self.database_url.strip()
+        # Hosted Postgres (Supabase, Neon, Render) hands out postgres:// or postgresql:// URLs;
+        # SQLAlchemy needs the driver named explicitly to use psycopg 3.
+        for scheme in ("postgres://", "postgresql://"):
+            if url.startswith(scheme):
+                url = "postgresql+psycopg://" + url[len(scheme):]
+                break
+        if url.startswith("postgresql+psycopg://") and "sslmode=" not in url:
+            host = url.split("@", 1)[-1].split("/", 1)[0].split(":", 1)[0]
+            if host not in ("localhost", "127.0.0.1", "db", "postgres"):
+                url += ("&" if "?" in url else "?") + "sslmode=require"
+        if not url.startswith("sqlite"):
+            return url
         # Anchor relative SQLite paths to backend/ so the DB location doesn't depend on cwd.
         prefix = "sqlite:///"
-        if self.database_url.startswith(prefix) and not self.database_url.startswith(prefix + "/"):
-            rel = self.database_url[len(prefix):]
+        if url.startswith(prefix) and not url.startswith(prefix + "/"):
+            rel = url[len(prefix):]
             if rel != ":memory:":
                 return prefix + str(self.resolve(rel))
-        return self.database_url
+        return url
 
 
 @lru_cache
