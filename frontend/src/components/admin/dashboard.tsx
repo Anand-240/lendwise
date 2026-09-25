@@ -8,6 +8,7 @@ import {
   ArrowUpDown,
   CheckCircle2,
   ChevronLeft,
+  Clock3,
   ChevronRight,
   Download,
   FileText,
@@ -17,6 +18,7 @@ import {
   Loader2,
   LogOut,
   Mail,
+  MessageSquareText,
   Reply,
   Send,
   Trash2,
@@ -33,7 +35,8 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Logo } from "@/components/site/logo";
 import { ApprovalRateBars, DecisionDonut, ProbabilityHistogram, VolumeChart } from "./charts";
 import { formatDate, formatINR, formatLakhCrore, formatPercent } from "@/lib/format";
-import type { AdminApplication, AdminEmail, AdminEmailPage, AdminPage, AdminStats, ContactPage, Decision, RiskBand } from "@/lib/types";
+import type { AdminApplication, AdminEmail, AdminEmailPage, AdminPage, AdminStats, ContactPage, FinalDecision, RiskBand } from "@/lib/types";
+import { ThreadList } from "@/components/decision/pending-view";
 import { EmailPreview, EmailStatusBadge, type PreviewEmail } from "@/components/site/email-preview";
 import { cn } from "@/lib/utils";
 
@@ -45,7 +48,14 @@ const PAGE_SIZE = 15;
 const selectCls =
   "h-10 rounded-lg border border-input bg-white px-3 text-sm text-stone-800 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40";
 
-export function DecisionBadge({ decision, overridden }: { decision: Decision; overridden?: boolean }) {
+export function DecisionBadge({ decision, overridden }: { decision: FinalDecision; overridden?: boolean }) {
+  if (decision === "PENDING") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-900 ring-1 ring-amber-200">
+        <Clock3 className="size-3.5" aria-hidden /> Awaiting review
+      </span>
+    );
+  }
   const ok = decision === "APPROVED";
   return (
     <span
@@ -242,9 +252,9 @@ export function AdminDashboard() {
         <section aria-label="Key metrics" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {stats ? (
             [
-              { label: "Total applications", value: stats.total.toLocaleString("en-IN"), sub: `${stats.under_review} under review · ${stats.overridden} overridden`, icon: FileText, tone: "text-brand bg-brand-soft" },
-              { label: "Approval rate", value: formatPercent(stats.approval_rate), sub: `${stats.approved} approved`, icon: CheckCircle2, tone: "text-emerald-700 bg-emerald-50" },
-              { label: "Rejection rate", value: formatPercent(stats.rejection_rate), sub: `${stats.rejected} rejected`, icon: XCircle, tone: "text-rose-700 bg-rose-50" },
+              { label: "Total applications", value: stats.total.toLocaleString("en-IN"), sub: `${stats.overridden} decided against the model`, icon: FileText, tone: "text-brand bg-brand-soft" },
+              { label: "Awaiting review", value: stats.awaiting_review.toLocaleString("en-IN"), sub: `${stats.info_requested} waiting on the applicant`, icon: Clock3, tone: "text-amber-800 bg-amber-50" },
+              { label: "Approval rate", value: formatPercent(stats.approval_rate), sub: `${stats.approved} approved · ${stats.rejected} rejected`, icon: CheckCircle2, tone: "text-emerald-700 bg-emerald-50" },
               { label: "Avg. default probability", value: formatPercent(stats.avg_default_probability), sub: `Low ${stats.by_risk_band.Low} · Mod ${stats.by_risk_band.Moderate} · High ${stats.by_risk_band.High}`, icon: GaugeIcon, tone: "text-amber-700 bg-amber-50" },
             ].map((k) => (
               <div key={k.label} className="rounded-lg bg-white p-5 border border-stone-200">
@@ -301,6 +311,7 @@ export function AdminDashboard() {
               </div>
               <select aria-label="Filter by decision" className={selectCls} value={filters.decision} onChange={(e) => setFilter("decision", e.target.value)}>
                 <option value="">All decisions</option>
+                <option value="PENDING">Awaiting review</option>
                 <option value="APPROVED">Approved</option>
                 <option value="REJECTED">Rejected</option>
               </select>
@@ -312,8 +323,9 @@ export function AdminDashboard() {
               </select>
               <select aria-label="Filter by status" className={selectCls} value={filters.status} onChange={(e) => setFilter("status", e.target.value)}>
                 <option value="">All statuses</option>
+                <option>Pending Review</option>
+                <option>Info Requested</option>
                 <option>Decided</option>
-                <option>Under Review</option>
                 <option>Overridden</option>
               </select>
               <label className="flex flex-col gap-1 text-xs text-stone-500">
@@ -342,6 +354,7 @@ export function AdminDashboard() {
                   <SortHeader sort={sort} order={order} onSort={toggleSort} k="loan_amount">Loan</SortHeader>
                   <SortHeader sort={sort} order={order} onSort={toggleSort} k="default_probability">Default prob.</SortHeader>
                   <th scope="col" className="px-4 py-3 font-medium">Risk band</th>
+                  <th scope="col" className="px-4 py-3 font-medium">Model</th>
                   <th scope="col" className="px-4 py-3 font-medium">Decision</th>
                   <th scope="col" className="px-4 py-3 font-medium">Status</th>
                 </tr>
@@ -350,13 +363,13 @@ export function AdminDashboard() {
                 {loading && !page
                   ? Array.from({ length: 6 }).map((_, i) => (
                       <tr key={i} className="border-t border-stone-100">
-                        <td colSpan={8} className="px-4 py-3"><Skeleton className="h-6 w-full" /></td>
+                        <td colSpan={9} className="px-4 py-3"><Skeleton className="h-6 w-full" /></td>
                       </tr>
                     ))
                   : page?.items.map((a) => (
                       <tr key={a.id} className="border-t border-stone-100 hover:bg-stone-50/70">
                         <td className="px-4 py-3">
-                          <button type="button" onClick={() => setSelected(a)} className="font-mono text-xs font-semibold text-brand hover:underline">
+                          <button type="button" onClick={() => openApplication(a.application_id)} className="font-mono text-xs font-semibold text-brand hover:underline">
                             {a.application_id}
                           </button>
                           {a.is_demo && <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">PROVISIONAL</span>}
@@ -369,13 +382,16 @@ export function AdminDashboard() {
                         <td className="px-4 py-3 tabular-nums">{formatLakhCrore(a.loan_amount)}</td>
                         <td className="px-4 py-3 tabular-nums">{formatPercent(a.default_probability)}</td>
                         <td className="px-4 py-3"><BandBadge band={a.risk_band} /></td>
-                        <td className="px-4 py-3"><DecisionBadge decision={a.final_decision} overridden={a.final_decision !== a.decision} /></td>
+                        <td className={cn("px-4 py-3 text-xs font-semibold", a.decision === "APPROVED" ? "text-emerald-800" : "text-rose-800")}>
+                          {a.decision === "APPROVED" ? "Approve" : "Reject"}
+                        </td>
+                        <td className="px-4 py-3"><DecisionBadge decision={a.final_decision} overridden={a.final_decision !== "PENDING" && a.final_decision !== a.decision} /></td>
                         <td className="px-4 py-3 text-stone-600">{a.status}</td>
                       </tr>
                     ))}
                 {page && page.items.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="px-4 py-12 text-center text-stone-500">No applications match these filters.</td>
+                    <td colSpan={9} className="px-4 py-12 text-center text-stone-500">No applications match these filters.</td>
                   </tr>
                 )}
               </tbody>
@@ -749,33 +765,35 @@ function ApplicationDrawer({
       setDeleting(false);
     }
   }
-  const [decision, setDecision] = useState<Decision | "">("");
   const [note, setNote] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+  const [asking, setAsking] = useState(false);
+  const [saving, setSaving] = useState<null | "approve" | "reject" | "request_info">(null);
 
-  async function save(body: Record<string, unknown>) {
+  async function act(action: "approve" | "reject" | "request_info") {
     if (!a) return;
-    if (note.trim().length < 5) {
-      toast.error("A note of at least 5 characters is required.");
-      return;
-    }
-    setSaving(true);
+    setSaving(action);
     try {
       const res = await authed(`/api/admin/applications/${a.application_id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...body, note: note.trim() }),
+        body: JSON.stringify({ action, note: note.trim() || null, message: action === "request_info" ? message.trim() : null }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error?.message ?? "Update failed");
-      toast.success("Application updated");
+      if (!res.ok) throw new Error(data?.error?.details?.[0]?.message ?? data?.error?.message ?? "Update failed");
+      toast.success(
+        action === "approve" ? "Application approved. The applicant has been emailed."
+          : action === "reject" ? "Application rejected. The applicant has been emailed."
+          : "Request sent. The applicant has been emailed.",
+      );
       setNote("");
-      setDecision("");
+      setMessage("");
+      setAsking(false);
       onUpdated(data);
     } catch (e) {
       if ((e as Error).message !== "unauthorized") toast.error((e as Error).message);
     } finally {
-      setSaving(false);
+      setSaving(null);
     }
   }
 
@@ -802,7 +820,7 @@ function ApplicationDrawer({
           <>
             <SheetHeader className="border-b border-stone-100">
               <SheetTitle className="flex flex-wrap items-center gap-2 text-lg">
-                {a.full_name} <DecisionBadge decision={a.final_decision} overridden={a.final_decision !== a.decision} />
+                {a.full_name} <DecisionBadge decision={a.final_decision} overridden={a.final_decision !== "PENDING" && a.final_decision !== a.decision} />
               </SheetTitle>
               <SheetDescription className="font-mono">
                 {a.application_id} · {formatDate(a.created_at, true)}
@@ -812,6 +830,90 @@ function ApplicationDrawer({
               {a.is_demo && (
                 <p className="rounded-lg bg-amber-50 p-3 text-xs text-amber-900">Decided while the risk model was unavailable (provisional decision, not a model output).</p>
               )}
+              <section className="rounded-md border border-stone-200 p-4" aria-labelledby="officer-decision-heading">
+                <h3 id="officer-decision-heading" className="text-sm font-semibold text-navy">Officer decision</h3>
+                <div
+                  className={cn(
+                    "mt-3 flex items-center justify-between gap-3 rounded-md p-3 text-sm",
+                    a.decision === "APPROVED" ? "bg-emerald-50 text-emerald-900" : "bg-rose-50 text-rose-900",
+                  )}
+                >
+                  <span>
+                    Model recommends <strong>{a.decision === "APPROVED" ? "Approve" : "Reject"}</strong>
+                  </span>
+                  <span className="text-xs">
+                    Approval score {formatPercent(1 - a.default_probability, 0)} · {a.risk_band} risk
+                  </span>
+                </div>
+                <p className="mt-2 text-xs text-stone-600">
+                  {a.final_decision === "PENDING"
+                    ? a.status === "Info Requested"
+                      ? "Waiting for the applicant to reply to your request."
+                      : "Awaiting your decision. The applicant can’t see the model’s recommendation."
+                    : `Final decision: ${a.final_decision === "APPROVED" ? "Approved" : "Rejected"}${a.final_decision !== a.decision ? " (against the model)" : ""}. You can still change it.`}
+                </p>
+
+                {a.messages.length > 0 && (
+                  <div className="mt-4">
+                    <p className="mb-2 text-xs font-medium text-stone-700">Conversation with applicant</p>
+                    <ThreadList messages={a.messages} />
+                  </div>
+                )}
+
+                <label htmlFor="officer-note" className="mt-4 block text-xs font-medium text-stone-700">
+                  Internal note (optional; required if you go against the model)
+                </label>
+                <Textarea
+                  id="officer-note"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  rows={2}
+                  maxLength={2000}
+                  placeholder="Visible to officers only…"
+                  className="mt-1"
+                />
+
+                {asking && (
+                  <div className="mt-3">
+                    <label htmlFor="officer-message" className="block text-xs font-medium text-stone-700">
+                      Message to the applicant (they’ll get it by email and on their status page)
+                    </label>
+                    <Textarea
+                      id="officer-message"
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      rows={3}
+                      maxLength={2000}
+                      placeholder="e.g. Please share your last 3 months’ salary slips."
+                      className="mt-1"
+                    />
+                  </div>
+                )}
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Button className="bg-emerald-700 text-white hover:bg-emerald-800" onClick={() => act("approve")} disabled={!!saving || a.final_decision === "APPROVED"}>
+                    {saving === "approve" ? <Loader2 className="animate-spin" aria-hidden /> : <CheckCircle2 aria-hidden />} Accept
+                  </Button>
+                  <Button className="bg-rose-700 text-white hover:bg-rose-800" onClick={() => act("reject")} disabled={!!saving || a.final_decision === "REJECTED"}>
+                    {saving === "reject" ? <Loader2 className="animate-spin" aria-hidden /> : <XCircle aria-hidden />} Reject
+                  </Button>
+                  {!asking ? (
+                    <Button variant="outline" onClick={() => setAsking(true)} disabled={!!saving || a.final_decision !== "PENDING"}>
+                      <MessageSquareText aria-hidden /> Request more info
+                    </Button>
+                  ) : (
+                    <>
+                      <Button variant="outline" onClick={() => act("request_info")} disabled={!!saving || message.trim().length < 10}>
+                        {saving === "request_info" ? <Loader2 className="animate-spin" aria-hidden /> : <Send aria-hidden />} Send request
+                      </Button>
+                      <Button variant="ghost" onClick={() => { setAsking(false); setMessage(""); }} disabled={!!saving}>
+                        Cancel
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </section>
+
               <section>
                 <h3 className="text-sm font-semibold text-navy">Model output</h3>
                 <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
@@ -875,39 +977,6 @@ function ApplicationDrawer({
                 </section>
               )}
 
-              <section className="rounded-md border border-stone-200 p-4">
-                <h3 className="text-sm font-semibold text-navy">Review & override</h3>
-                <p className="mt-1 text-xs text-stone-500">The original model decision is always kept. A note is required for every change.</p>
-                <fieldset className="mt-4">
-                  <legend className="text-xs font-medium text-stone-700">Set final decision</legend>
-                  <div className="mt-2 grid grid-cols-2 gap-2">
-                    {(["APPROVED", "REJECTED"] as const).map((d) => (
-                      <label
-                        key={d}
-                        className={cn(
-                          "flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-ring/40",
-                          decision === d ? "border-brand bg-brand-soft font-medium" : "border-input",
-                        )}
-                      >
-                        <input type="radio" name="override" value={d} checked={decision === d} onChange={() => setDecision(d)} className="accent-[#8A6417]" />
-                        {d === "APPROVED" ? "Approve" : "Reject"}
-                      </label>
-                    ))}
-                  </div>
-                </fieldset>
-                <label htmlFor="officer-note" className="mt-4 block text-xs font-medium text-stone-700">
-                  Note (required)
-                </label>
-                <Textarea id="officer-note" value={note} onChange={(e) => setNote(e.target.value)} rows={3} maxLength={2000} placeholder="Reason for this change…" className="mt-1" />
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Button onClick={() => save({ decision })} disabled={!decision || saving}>
-                    {saving && <Loader2 className="animate-spin" aria-hidden />} Save decision
-                  </Button>
-                  <Button variant="outline" onClick={() => save({ status: "Under Review" })} disabled={saving || a.status === "Under Review"}>
-                    Mark under review
-                  </Button>
-                </div>
-              </section>
 
               <section>
                 <h3 className="text-sm font-semibold text-navy">Emails to applicant</h3>

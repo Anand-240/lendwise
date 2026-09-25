@@ -41,7 +41,7 @@ const STEPS = [
 
 const DRAFT_KEY = "lendwise-apply-draft-v1";
 const TENURE_PRESETS = [12, 24, 36, 60, 120, 240];
-const ASSESS_STEPS = ["Verifying details", "Running risk model", "Finalizing decision"];
+const ASSESS_STEPS = ["Verifying details", "Running risk assessment", "Sending to a loan officer"];
 
 type FormValues = ApplicationForm;
 type Phase = "form" | "assessing";

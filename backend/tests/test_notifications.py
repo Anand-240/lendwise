@@ -89,22 +89,27 @@ def test_application_emails_in_demo_outbox(client, token):
     h = {"Authorization": f"Bearer {token}"}
     created = client.post("/api/v1/applications", json={**VALID, "full_name": "Mail Tester", "email": "mail@example.com"}).json()
     assert created["phone_verified"] is True
-    kinds = [e["kind"] for e in created["emails"]]
-    assert kinds == ["application_received", "decision"]
-    assert all(e["status"] == "demo" and e["to_masked"].startswith("m") and "*" in e["to_masked"] for e in created["emails"])
-    assert created["application_id"] in created["emails"][0]["html"]
+    # Only the receipt goes out on submission; the decision email waits for the officer.
+    assert [e["kind"] for e in created["emails"]] == ["application_received"]
+    e = created["emails"][0]
+    assert e["status"] == "demo" and e["to_masked"].startswith("m") and "*" in e["to_masked"]
+    assert created["application_id"] in e["html"] and "loan officer will review" in e["html"]
 
     aid = created["application_id"]
-    flipped = "REJECTED" if created["decision"] == "APPROVED" else "APPROVED"
-    client.patch(f"/api/v1/admin/applications/{aid}", json={"decision": flipped, "note": "Internal secret note"}, headers=h)
+    model = client.get(f"/api/v1/admin/applications/{aid}", headers=h).json()["decision"]
+    agree = "approve" if model == "APPROVED" else "reject"
+    client.patch(f"/api/v1/admin/applications/{aid}", json={"action": agree, "note": "Internal secret note"}, headers=h)
     outbox = client.get("/api/v1/admin/emails", params={"application_id": aid}, headers=h).json()
     assert outbox["mode"] == "demo"
-    update = [e for e in outbox["items"] if e["kind"] == "decision_update"]
-    assert len(update) == 1 and "Internal secret note" not in update[0]["html"]  # officer note never leaks
-    # a note-only change (no decision/status change) sends nothing new
-    client.patch(f"/api/v1/admin/applications/{aid}", json={"decision": flipped, "note": "Same decision again"}, headers=h)
+    decision_mails = [e for e in outbox["items"] if e["kind"] == "decision"]
+    assert len(decision_mails) == 1 and "Internal secret note" not in decision_mails[0]["html"]  # note never leaks
+    # Repeating the same decision sends nothing new.
+    client.patch(f"/api/v1/admin/applications/{aid}", json={"action": agree, "note": "Same decision again"}, headers=h)
     again = client.get("/api/v1/admin/emails", params={"application_id": aid}, headers=h).json()
-    assert len([e for e in again["items"] if e["kind"] == "decision_update"]) == 1
+    assert len([e for e in again["items"] if e["kind"] in ("decision", "decision_update")]) == 1
+    # Changing it later sends an update.
+    flip = "reject" if agree == "approve" else "approve"
+    client.patch(f"/api/v1/admin/applications/{aid}", json={"action": flip, "note": "Changed after re-check"}, headers=h)
     status = client.get(f"/api/v1/applications/{aid}/status", params={"email": "mail@example.com"}).json()
     assert [e["kind"] for e in status["emails"]] == ["application_received", "decision", "decision_update"]
 

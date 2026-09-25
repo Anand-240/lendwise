@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     rate_limit_per_minute: int = 10
     rate_limit_global_per_minute: int = 120  # backstop across all clients (IP headers can be spoofed)
     force_demo_mode: bool = False
+    # Model output is a recommendation; a loan officer makes the final decision.
+    require_officer_review: bool = True
 
     # Public site URL used for links inside emails.
     public_site_url: str = "http://localhost:3000"

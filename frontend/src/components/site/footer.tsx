@@ -52,7 +52,7 @@ export function SiteFooter() {
       <div className="container-page grid gap-10 py-12 md:grid-cols-[1.3fr_repeat(4,1fr)]">
         <div className="max-w-xs space-y-4">
           <Logo light />
-          <p className="text-sm leading-relaxed">Online loan applications with an instant, explained decision.</p>
+          <p className="text-sm leading-relaxed">Online loan applications with fast, explained decisions.</p>
           <p className="text-sm">
             Customer support
             <br />

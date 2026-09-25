@@ -127,3 +127,16 @@ class PhoneVerification(Base):
     code_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     attempts: Mapped[int] = mapped_column(Integer, default=0)
     verified_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), nullable=True)
+
+
+
+class ApplicationMessage(Base):
+    """Applicant-visible conversation on an application (officer info requests and applicant replies)."""
+
+    __tablename__ = "application_messages"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    application_id: Mapped[str] = mapped_column(String(32), index=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow, index=True)
+    author: Mapped[str] = mapped_column(String(12))  # officer | applicant
+    body: Mapped[str] = mapped_column(Text)

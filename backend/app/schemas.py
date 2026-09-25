@@ -10,7 +10,8 @@ from app.ml.predictor import get_predictor
 
 Purpose = Literal["Personal", "Home", "Vehicle", "Education", "Business", "Medical", "Other"]
 Decision = Literal["APPROVED", "REJECTED"]
-Status = Literal["Decided", "Under Review", "Overridden"]
+FinalDecision = Literal["APPROVED", "REJECTED", "PENDING"]
+Status = Literal["Pending Review", "Info Requested", "Decided", "Overridden", "Under Review"]
 
 PHONE_RE = re.compile(r"^[6-9]\d{9}$")
 
@@ -162,16 +163,24 @@ class EmailSummary(BaseModel):
     html: str
 
 
+class ThreadMessage(BaseModel):
+    author: Literal["officer", "applicant"]
+    body: str
+    created_at: datetime
+
+
 class ApplicationResult(BaseModel):
+    """Applicant-facing view. While the application awaits an officer, model outputs are withheld."""
+
     application_id: str
-    decision: Decision
-    model_decision: Decision
+    decision: FinalDecision
+    model_decision: Decision | None
     status: Status
-    risk_class: int
-    default_probability: float
-    approval_score: float
-    confidence: float
-    risk_band: Literal["Low", "Moderate", "High"]
+    risk_class: int | None
+    default_probability: float | None
+    approval_score: float | None
+    confidence: float | None
+    risk_band: Literal["Low", "Moderate", "High"] | None
     indicative_factors: list[Factor]
     engineered_features: dict[str, Any]
     warnings: list[str]
@@ -184,6 +193,8 @@ class ApplicationResult(BaseModel):
     officer_note_present: bool = False
     phone_verified: bool = False
     emails: list[EmailSummary] = []
+    messages: list[ThreadMessage] = []
+    decided_at: datetime | None = None
 
 
 class ApplicationCreated(ApplicationResult):
@@ -250,6 +261,7 @@ class AdminApplication(BaseModel):
     officer_note: str | None
     reviewed_at: datetime | None
     phone_verified: bool
+    messages: list[ThreadMessage] = []
 
 
 class AdminPage(BaseModel):
@@ -261,16 +273,35 @@ class AdminPage(BaseModel):
 
 
 class AdminUpdate(BaseModel):
-    note: str = Field(min_length=5, max_length=2000)
-    decision: Decision | None = None
-    status: Literal["Under Review", "Decided"] | None = None
+    """Officer action. `note` is internal; `message` is shown and emailed to the applicant."""
 
-    @field_validator("note")
+    action: Literal["approve", "reject", "request_info"]
+    note: str | None = Field(default=None, max_length=2000)
+    message: str | None = Field(default=None, max_length=2000)
+
+    @field_validator("note", "message")
     @classmethod
-    def _strip(cls, v: str) -> str:
+    def _strip(cls, v: str | None) -> str | None:
+        v = (v or "").strip()
+        return v or None
+
+    @model_validator(mode="after")
+    def _requirements(self) -> "AdminUpdate":
+        if self.action == "request_info" and (not self.message or len(self.message) < 10):
+            raise ValueError("message: describe what you need from the applicant (at least 10 characters)")
+        return self
+
+
+class ApplicantReplyIn(BaseModel):
+    message: str = Field(min_length=5, max_length=2000)
+    email: EmailStr | None = None
+
+    @field_validator("message")
+    @classmethod
+    def _strip_msg(cls, v: str) -> str:
         v = v.strip()
         if len(v) < 5:
-            raise ValueError("a note of at least 5 characters is required")
+            raise ValueError("please write at least 5 characters")
         return v
 
 

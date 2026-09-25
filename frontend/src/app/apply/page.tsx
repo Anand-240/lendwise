@@ -24,7 +24,7 @@ export default async function ApplyPage() {
           </nav>
           <h1 className="mt-3 text-3xl font-semibold text-navy md:text-[2.25rem]">Loan application</h1>
           <p className="mt-3 text-stone-600">
-            Five short sections, about three minutes. You’ll see your decision as soon as you submit.
+            Five short sections, about three minutes. Our risk model assesses it instantly and a loan officer confirms the final decision.
           </p>
         </div>
         {md ? <ApplyWizard metadata={md} /> : <ServiceUnavailable />}

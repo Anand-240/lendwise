@@ -7,7 +7,7 @@ export const FAQS: { q: string; a: string; category: "General" | "Decision" | "P
   {
     category: "Decision",
     q: "How is my application decided?",
-    a: "Your profile (income, age, experience, job and residence tenure, marital status, house and car ownership, profession, city and state) is converted into 414 model features. A Random Forest predicts whether the profile is low or high risk. Low risk is approved; high risk is declined.",
+    a: "Your profile (income, age, experience, job and residence tenure, marital status, house and car ownership, profession, city and state) is converted into 414 model features. A Random Forest predicts whether the profile is low or high risk, and a loan officer reviews that recommendation to make the final decision.",
   },
   {
     category: "Decision",
@@ -17,7 +17,7 @@ export const FAQS: { q: string; a: string; category: "General" | "Decision" | "P
   {
     category: "Decision",
     q: "How long does a decision take?",
-    a: "Usually just a few seconds after you submit. You'll see the result immediately and can download a PDF decision letter.",
+    a: "The risk assessment takes a few seconds. A loan officer then reviews your application; you’ll be emailed the decision and can check your status any time with your application ID and email.",
   },
   {
     category: "Decision",

@@ -7,6 +7,7 @@ from typing import Literal
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import StreamingResponse
 from sqlalchemy import Select, func, or_, select
 from sqlalchemy.orm import Session
@@ -18,7 +19,7 @@ from app.db import get_db
 from app.emailer import queue_email
 from app.middleware import RateLimiter, client_key
 from app.ml.predictor import get_predictor
-from app.services import send_decision_email
+from app.services import add_message, send_decision_email, thread
 from app.models_db import Application, ContactMessage, OutboundEmail, utcnow
 from app.schemas import AdminApplication, AdminPage, AdminUpdate, AdminEmail, AdminEmailPage, ContactOut, ContactPage, LoginIn, LoginOut, MessageUpdate, ReplyIn, ReplyOut
 
@@ -79,9 +80,9 @@ class _Filters:
     def __init__(
         self,
         q: str | None = Query(None, max_length=80, description="Search by applicant name or application ID"),
-        decision: Literal["APPROVED", "REJECTED"] | None = None,
+        decision: Literal["APPROVED", "REJECTED", "PENDING"] | None = None,
         risk_band: Literal["Low", "Moderate", "High"] | None = None,
-        status: Literal["Decided", "Under Review", "Overridden"] | None = None,
+        status: Literal["Pending Review", "Info Requested", "Decided", "Overridden", "Under Review"] | None = None,
         date_from: date | None = None,
         date_to: date | None = None,
     ):
@@ -146,9 +147,13 @@ def _get(db: Session, application_id: str) -> Application:
     return row
 
 
+def _detail(db: Session, row: Application) -> AdminApplication:
+    return AdminApplication.model_validate(row).model_copy(update={"messages": thread(db, row.application_id)})
+
+
 @router.get("/applications/{application_id}", response_model=AdminApplication)
 def get_application(application_id: str, _: str = Depends(require_officer), db: Session = Depends(get_db)):
-    return _get(db, application_id)
+    return _detail(db, _get(db, application_id))
 
 
 @router.patch("/applications/{application_id}", response_model=AdminApplication)
@@ -160,24 +165,43 @@ def update_application(
     db: Session = Depends(get_db),
 ):
     row = _get(db, application_id)
-    before = (row.final_decision, row.status)
-    if body.decision is None and body.status is None:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Provide a decision override or a status")
-    if body.decision is not None:
-        row.final_decision = body.decision
-        row.status = "Overridden" if body.decision != row.decision else "Decided"
-    elif body.status is not None:
-        row.status = body.status
     stamp = utcnow().strftime("%Y-%m-%d %H:%M UTC")
-    entry = f"[{stamp}] {officer}: {body.note}"
-    row.officer_note = f"{row.officer_note}\n{entry}" if row.officer_note else entry
+
+    def log(text: str) -> None:
+        entry = f"[{stamp}] {officer}: {text}"
+        row.officer_note = f"{row.officer_note}\n{entry}" if row.officer_note else entry
+
+    if body.action == "request_info":
+        row.status = "Info Requested"
+        add_message(db, row.application_id, "officer", body.message)
+        log(f"Requested more information. {body.note or ''}".strip())
+        row.reviewed_at = utcnow()
+        db.commit()
+        db.refresh(row)
+        queue_email(db, row.email, tpl.info_requested(row, body.message), "info_requested", background, row.application_id)
+        return _detail(db, row)
+
+    new_decision = "APPROVED" if body.action == "approve" else "REJECTED"
+    against_model = new_decision != row.decision
+    if against_model and (not body.note or len(body.note) < 5):
+        raise RequestValidationError(
+            [{"loc": ("body", "note"), "msg": "Add a note (at least 5 characters) explaining why you are going against the model.", "type": "value_error"}]
+        )
+    already_decided = row.final_decision in ("APPROVED", "REJECTED")
+    changed = row.final_decision != new_decision
+    row.final_decision = new_decision
+    row.status = "Overridden" if against_model else "Decided"
+    log(f"{'Approved' if new_decision == 'APPROVED' else 'Rejected'}{' (against model recommendation)' if against_model else ''}."
+        + (f" {body.note}" if body.note else ""))
+    if body.message:
+        add_message(db, row.application_id, "officer", body.message)
     row.reviewed_at = utcnow()
     db.commit()
     db.refresh(row)
-    if (row.final_decision, row.status) != before:
-        # Tell the applicant; the officer's internal note is never included.
-        send_decision_email(db, row, background, updated=True)
-    return row
+    if changed:
+        # The applicant is told the outcome; the officer's internal note is never included.
+        send_decision_email(db, row, background, updated=already_decided)
+    return _detail(db, row)
 
 
 @router.delete("/applications/{application_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -275,7 +299,9 @@ def stats(days: int = Query(30, ge=7, le=365), _: str = Depends(require_officer)
 
     total = len(rows)
     approved = sum(1 for r in rows if r.final_decision == "APPROVED")
-    rejected = total - approved
+    rejected = sum(1 for r in rows if r.final_decision == "REJECTED")
+    decided = approved + rejected
+    awaiting = sum(1 for r in rows if r.final_decision == "PENDING")
 
     tz = _tz()
     today = datetime.now(tz).date()
@@ -289,7 +315,8 @@ def stats(days: int = Query(30, ge=7, le=365), _: str = Depends(require_officer)
     def group(attr: str, col: str, top: int = 10):
         g: dict[str, Counter] = defaultdict(Counter)
         for r in rows:
-            g[getattr(r, attr)][r.final_decision] += 1
+            if r.final_decision in ("APPROVED", "REJECTED"):
+                g[getattr(r, attr)][r.final_decision] += 1
         out = [
             {
                 "value": k,
@@ -311,8 +338,11 @@ def stats(days: int = Query(30, ge=7, le=365), _: str = Depends(require_officer)
         "total": total,
         "approved": approved,
         "rejected": rejected,
-        "approval_rate": approved / total if total else 0.0,
-        "rejection_rate": rejected / total if total else 0.0,
+        "approval_rate": approved / decided if decided else 0.0,
+        "rejection_rate": rejected / decided if decided else 0.0,
+        "awaiting_review": awaiting,
+        "info_requested": sum(1 for r in rows if r.status == "Info Requested"),
+        "model_would_approve": sum(1 for r in rows if r.final_decision == "PENDING" and r.default_probability < 0.5),
         "avg_default_probability": (sum(r.default_probability for r in rows) / total) if total else 0.0,
         "under_review": sum(1 for r in rows if r.status == "Under Review"),
         "overridden": sum(1 for r in rows if r.status == "Overridden"),

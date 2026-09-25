@@ -60,17 +60,18 @@ def test_metadata(client):
 
 
 @needs_model
-def test_submit_valid_returns_201(client):
+def test_submit_valid_returns_201_pending_review(client):
     r = client.post("/api/v1/applications", json=VALID)
     assert r.status_code == 201, r.text
     body = r.json()
     assert body["application_id"].startswith("LW-")
-    assert body["decision"] in ("APPROVED", "REJECTED")
-    assert body["decision"] == ("APPROVED" if body["risk_class"] == 0 else "REJECTED")
-    assert abs(body["approval_score"] + body["default_probability"] - 1) < 1e-6
+    # The model has scored it, but the applicant only sees that an officer is reviewing it.
+    assert body["decision"] == "PENDING" and body["status"] == "Pending Review"
+    for hidden in ("model_decision", "risk_class", "default_probability", "approval_score", "confidence", "risk_band", "estimated_emi"):
+        assert body[hidden] is None, hidden
+    assert body["indicative_factors"] == [] and body["engineered_features"] == {}
     assert body["is_demo"] is False
     assert body["access_token"]
-    assert (body["estimated_emi"] is not None) == (body["decision"] == "APPROVED")
     assert body["applicant"]["phone_masked"] == "98******10"
 
 
@@ -130,48 +131,99 @@ def test_admin_requires_auth(client):
     assert bad.status_code == 401
 
 
-def test_admin_list_detail_override_stats_export(client, token):
+def test_officer_review_flow_stats_export(client, token):
     h = {"Authorization": f"Bearer {token}"}
     created = client.post("/api/v1/applications", json={**VALID, "full_name": "Ravi Kumar"}).json()
     aid = created["application_id"]
 
     page = client.get("/api/v1/admin/applications", params={"q": "Ravi"}, headers=h).json()
     assert page["total"] >= 1 and page["items"][0]["full_name"] == "Ravi Kumar"
-
     assert page["items"][0]["created_at"].endswith(("Z", "+00:00")), "timestamps must be timezone-aware"
     from datetime import datetime
     from zoneinfo import ZoneInfo
 
     # Date filters use the business timezone (Asia/Kolkata by default), not UTC days.
-    created = datetime.fromisoformat(page["items"][0]["created_at"].replace("Z", "+00:00"))
-    today = created.astimezone(ZoneInfo("Asia/Kolkata")).date().isoformat()
+    created_at = datetime.fromisoformat(page["items"][0]["created_at"].replace("Z", "+00:00"))
+    today = created_at.astimezone(ZoneInfo("Asia/Kolkata")).date().isoformat()
     dated = client.get("/api/v1/admin/applications", params={"date_from": today, "date_to": today}, headers=h).json()
     assert dated["total"] >= 1
+    pending = client.get("/api/v1/admin/applications", params={"decision": "PENDING"}, headers=h).json()
+    assert any(i["application_id"] == aid for i in pending["items"])
 
+    # Officers see the model recommendation even while the applicant doesn't.
     detail = client.get(f"/api/v1/admin/applications/{aid}", headers=h).json()
-    original = detail["decision"]
-    flipped = "REJECTED" if original == "APPROVED" else "APPROVED"
+    model = detail["decision"]
+    assert detail["final_decision"] == "PENDING" and model in ("APPROVED", "REJECTED")
+    against = "reject" if model == "APPROVED" else "approve"
+    agree = "approve" if model == "APPROVED" else "reject"
 
-    no_note = client.patch(f"/api/v1/admin/applications/{aid}", json={"decision": flipped}, headers=h)
-    assert no_note.status_code == 422
+    # Going against the model needs a note.
+    no_note = client.patch(f"/api/v1/admin/applications/{aid}", json={"action": against}, headers=h)
+    assert no_note.status_code == 422 and no_note.json()["error"]["details"][0]["field"] == "note"
+    # Agreeing with the model doesn't.
+    ok = client.patch(f"/api/v1/admin/applications/{aid}", json={"action": agree}, headers=h)
+    assert ok.status_code == 200
+    assert ok.json()["final_decision"] == model and ok.json()["status"] == "Decided"
 
-    upd = client.patch(f"/api/v1/admin/applications/{aid}", json={"decision": flipped, "note": "Manual review ok"}, headers=h)
-    assert upd.status_code == 200
+    # Changing a decision later is an override and keeps the model decision.
+    upd = client.patch(f"/api/v1/admin/applications/{aid}", json={"action": against, "note": "Manual review ok"}, headers=h)
     u = upd.json()
-    assert u["final_decision"] == flipped and u["decision"] == original and u["status"] == "Overridden"
+    assert upd.status_code == 200 and u["final_decision"] != model and u["decision"] == model and u["status"] == "Overridden"
     assert "Manual review ok" in u["officer_note"]
 
     public = client.get(f"/api/v1/applications/{aid}/status", params={"email": VALID["email"]}).json()
-    assert public["decision"] == flipped and public["model_decision"] == original
+    assert public["decision"] == u["final_decision"] and public["model_decision"] == model
+    assert public["risk_band"] in ("Low", "Moderate", "High") and public["decided_at"]
+    # Factors explain the final (officer) decision, not the model's.
+    want = "risk" if u["final_decision"] == "REJECTED" else "strength"
+    assert all(f["direction"] == want for f in public["indicative_factors"])
 
     stats = client.get("/api/v1/admin/stats", headers=h).json()
-    assert stats["total"] >= 1 and stats["overridden"] >= 1
+    assert stats["total"] >= 1 and stats["overridden"] >= 1 and "awaiting_review" in stats
     assert abs(stats["approval_rate"] + stats["rejection_rate"] - 1) < 1e-9
     assert len(stats["per_day"]) == 30
 
     csv = client.get("/api/v1/admin/applications/export.csv", headers=h)
     assert csv.status_code == 200 and csv.headers["content-type"].startswith("text/csv")
     assert aid in csv.text
+
+
+def test_request_more_info_and_applicant_reply(client, token):
+    h = {"Authorization": f"Bearer {token}"}
+    created = client.post("/api/v1/applications", json={**VALID, "full_name": "Info Needed"}).json()
+    aid, tok = created["application_id"], created["access_token"]
+
+    # Replying before anything was requested is refused.
+    early = client.post(f"/api/v1/applications/{aid}/reply", json={"message": "Here you go"}, headers={"X-Access-Token": tok})
+    assert early.status_code == 409
+
+    short = client.patch(f"/api/v1/admin/applications/{aid}", json={"action": "request_info", "message": "Docs?"}, headers=h)
+    assert short.status_code == 422
+    r = client.patch(f"/api/v1/admin/applications/{aid}",
+                     json={"action": "request_info", "message": "Please share your last 3 salary slips.", "note": "Income looks high"},
+                     headers=h)
+    assert r.status_code == 200 and r.json()["status"] == "Info Requested" and r.json()["final_decision"] == "PENDING"
+    assert r.json()["messages"][0] == {**r.json()["messages"][0], "author": "officer", "body": "Please share your last 3 salary slips."}
+
+    public = client.get(f"/api/v1/applications/{aid}/status", params={"email": VALID["email"]}).json()
+    assert public["status"] == "Info Requested" and public["messages"][0]["author"] == "officer"
+    assert "Income looks high" not in str(public)  # internal note stays internal
+    assert public["risk_band"] is None  # still pending, model view hidden
+
+    # Wrong credentials look like "not found".
+    bad = client.post(f"/api/v1/applications/{aid}/reply", json={"message": "Here you go", "email": "someone@else.com"})
+    assert bad.status_code == 404
+    rep = client.post(f"/api/v1/applications/{aid}/reply", json={"message": "Uploaded my salary slips, thanks.", "email": VALID["email"]})
+    assert rep.status_code == 200 and rep.json()["status"] == "Pending Review"
+    assert [m["author"] for m in rep.json()["messages"]] == ["officer", "applicant"]
+
+    # A second request can be answered from the applicant's own browser (access token).
+    client.patch(f"/api/v1/admin/applications/{aid}", json={"action": "request_info", "message": "And a recent bank statement please."}, headers=h)
+    rep2 = client.post(f"/api/v1/applications/{aid}/reply", json={"message": "Bank statement attached."}, headers={"X-Access-Token": tok})
+    assert rep2.status_code == 200 and len(rep2.json()["messages"]) == 4
+
+    kinds = [e["kind"] for e in client.get("/api/v1/admin/emails", params={"application_id": aid}, headers=h).json()["items"]]
+    assert kinds.count("info_requested") == 2 and "decision" not in kinds
 
 
 def test_demo_mode(client):

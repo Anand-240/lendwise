@@ -19,7 +19,7 @@ const PIPELINE = [
   { title: "Encoding", text: "Categories (profession, city, state, age group…) are one-hot encoded into 400+ binary columns, exactly as during training." },
   { title: "Scaling", text: "Ten numeric features are standardised with the scaler fitted on the training split, so values are on the same footing the model learned." },
   { title: "Random Forest", text: "An ensemble of 100 decision trees votes on whether the profile looks like past defaulters (class 1) or not (class 0)." },
-  { title: "Decision", text: "Class 0 → Approved, class 1 → Rejected. Default probability sets the display risk band; indicative factors explain in plain language." },
+  { title: "Officer decision", text: "The model’s class (0 = approve, 1 = decline) and risk band are a recommendation. A loan officer approves, declines or asks for more information." },
 ];
 
 const METRIC_INFO: Record<string, [string, string]> = {

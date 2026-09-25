@@ -88,8 +88,10 @@ export type Factor = {
 };
 
 export type Decision = "APPROVED" | "REJECTED";
+export type FinalDecision = Decision | "PENDING";
 export type RiskBand = "Low" | "Moderate" | "High";
-export type AppStatus = "Decided" | "Under Review" | "Overridden";
+export type AppStatus = "Pending Review" | "Info Requested" | "Decided" | "Overridden" | "Under Review";
+export type ThreadMessage = { author: "officer" | "applicant"; body: string; created_at: string };
 
 export type ApplicantSummary = {
   full_name: string;
@@ -113,14 +115,14 @@ export type ApplicantSummary = {
 
 export type ApplicationResult = {
   application_id: string;
-  decision: Decision;
-  model_decision: Decision;
+  decision: FinalDecision;
+  model_decision: Decision | null;
   status: AppStatus;
-  risk_class: number;
-  default_probability: number;
-  approval_score: number;
-  confidence: number;
-  risk_band: RiskBand;
+  risk_class: number | null;
+  default_probability: number | null;
+  approval_score: number | null;
+  confidence: number | null;
+  risk_band: RiskBand | null;
   indicative_factors: Factor[];
   engineered_features: Record<string, number | string>;
   warnings: string[];
@@ -133,6 +135,19 @@ export type ApplicationResult = {
   officer_note_present: boolean;
   phone_verified: boolean;
   emails: EmailSummary[];
+  messages: ThreadMessage[];
+  decided_at: string | null;
+};
+
+/** A result an officer has decided: model outputs are always present. */
+export type DecidedResult = ApplicationResult & {
+  decision: Decision;
+  model_decision: Decision;
+  risk_class: number;
+  default_probability: number;
+  approval_score: number;
+  confidence: number;
+  risk_band: RiskBand;
 };
 
 export type AdminApplication = {
@@ -163,7 +178,7 @@ export type AdminApplication = {
   confidence: number;
   risk_band: RiskBand;
   decision: Decision;
-  final_decision: Decision;
+  final_decision: FinalDecision;
   indicative_factors: Factor[];
   warnings: string[];
   model_version: string;
@@ -173,6 +188,7 @@ export type AdminApplication = {
   officer_note: string | null;
   reviewed_at: string | null;
   phone_verified: boolean;
+  messages: ThreadMessage[];
 };
 
 export type AdminPage = {
@@ -201,6 +217,9 @@ export type AdminStats = {
   avg_default_probability: number;
   under_review: number;
   overridden: number;
+  awaiting_review: number;
+  info_requested: number;
+  model_would_approve: number;
   demo_count: number;
   by_risk_band: Record<RiskBand, number>;
   per_day: { date: string; approved: number; rejected: number }[];

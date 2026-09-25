@@ -97,11 +97,11 @@ def application_received(a) -> Rendered:
         ("Purpose", a.purpose),
     ]
     body = _p(f"Hi {escape(first)},") + _p(
-        "Thank you for applying with LendWise. We’ve received your application and our risk model has assessed it. "
-        "Your decision is in a separate email."
+        "Thank you for applying with LendWise. We’ve received your application. A loan officer will review it "
+        "and we’ll email you as soon as a decision is made."
     ) + _table(rows) + _p("Keep your application ID — you’ll need it, with this email address, to check your status.")
     text = (
-        f"Hi {first},\n\nThank you for applying with LendWise. We've received your application.\n\n"
+        f"Hi {first},\n\nThank you for applying with LendWise. We've received your application. A loan officer will review it and email you the decision.\n\n"
         + "\n".join(f"{k}: {v}" for k, v in rows)
         + f"\n\nCheck your status: {_site('/status?id=' + a.application_id)}\n\n{DISCLAIMER}"
     )
@@ -135,7 +135,7 @@ def decision(a, emi: float | None, updated: bool = False) -> Rendered:
         intro = (
             "Following a review by a loan officer, your application has been approved."
             if updated
-            else "Good news — our risk model assessed your profile as low risk and your application is approved."
+            else "Good news: your application has been reviewed by a loan officer and is approved."
         )
         body = (
             _p(f"Hi {escape(first)},") + _p(intro) + _table(rows)
@@ -153,7 +153,7 @@ def decision(a, emi: float | None, updated: bool = False) -> Rendered:
         intro = (
             "Following a review by a loan officer, we’re unable to approve your application at this time."
             if updated
-            else "Thank you for applying. After assessing your profile, we’re unable to approve your application at this time."
+            else "Thank you for applying. After a review by a loan officer, we’re unable to approve your application at this time."
         )
         body = (
             _p(f"Hi {escape(first)},") + _p(intro)
@@ -189,3 +189,24 @@ def contact_reply(m, reply: str) -> Rendered:
     )
     text = f"Hi {first},\n\n{reply}\n\nRegards,\nLendWise Support\n\n--- Your original message ({m.reference}) ---\n{m.message}\n\n{DISCLAIMER}"
     return Rendered(f"Re: your message {m.reference}", _layout("Reply from LendWise Support", f"Re: {m.reference}", body), text)
+
+
+def info_requested(a, message: str) -> Rendered:
+    first = a.full_name.split(" ")[0]
+    link = _site(f"/status?id={a.application_id}")
+    msg_html = escape(message).replace("\n", "<br>")
+    body = (
+        _p(f"Hi {escape(first)},")
+        + _p(f"A loan officer reviewing application <strong>{escape(a.application_id)}</strong> needs a little more information:")
+        + f'<blockquote style="margin:16px 0;padding:12px 16px;border-left:3px solid {GOLD};background:#FAFAF9">{msg_html}</blockquote>'
+        + _p("Please reply from your application status page. Your application will continue as soon as we hear from you.")
+    )
+    text = (
+        f"Hi {first},\n\nA loan officer reviewing application {a.application_id} needs more information:\n\n{message}\n\n"
+        f"Reply here: {link}\n\n{DISCLAIMER}"
+    )
+    return Rendered(
+        f"More information needed for application {a.application_id}",
+        _layout("We need a little more information", f"About application {a.application_id}", body, ("Reply to the officer", link)),
+        text,
+    )

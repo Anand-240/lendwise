@@ -13,9 +13,9 @@ from app.ml import decision as dec
 from app.ml.predictor import get_predictor
 from app import email_templates as tpl
 from app.emailer import queue_email
-from app.models_db import Application, OutboundEmail
+from app.models_db import Application, ApplicationMessage, OutboundEmail
 from app.otp import token_matches
-from app.schemas import ApplicantSummary, ApplicationCreate, ApplicationResult, EmailSummary
+from app.schemas import ApplicantSummary, ApplicationCreate, ApplicationResult, EmailSummary, ThreadMessage
 
 
 def _label(col: str, value: str) -> str:
@@ -27,6 +27,7 @@ def _label(col: str, value: str) -> str:
 
 def submit_application(db: Session, body: ApplicationCreate, background: BackgroundTasks | None = None) -> Application:
     predictor = get_predictor()
+    review = get_settings().require_officer_review
     raw = body.to_model_row()
     pred = predictor.predict(raw)
     decision = dec.decide(pred.risk_class)
@@ -63,13 +64,13 @@ def submit_application(db: Session, body: ApplicationCreate, background: Backgro
         confidence=pred.confidence,
         risk_band=dec.risk_band(pred.default_probability),
         decision=decision,
-        final_decision=decision,
+        final_decision="PENDING" if review else decision,
         indicative_factors=factors,
         warnings=warnings,
         model_version=pred.model_version,
         is_demo=pred.is_demo,
         interest_rate=get_settings().demo_interest_rate,
-        status="Decided",
+        status="Pending Review" if review else "Decided",
     )
     db.add(app_row)
     db.flush()
@@ -77,8 +78,22 @@ def submit_application(db: Session, body: ApplicationCreate, background: Backgro
     db.commit()
     db.refresh(app_row)
     queue_email(db, app_row.email, tpl.application_received(app_row), "application_received", background, app_row.application_id)
-    send_decision_email(db, app_row, background)
+    if not review:
+        send_decision_email(db, app_row, background)
     return app_row
+
+
+def thread(db: Session | None, application_id: str) -> list[ThreadMessage]:
+    if db is None:
+        return []
+    rows = db.scalars(
+        select(ApplicationMessage).where(ApplicationMessage.application_id == application_id).order_by(ApplicationMessage.id)
+    ).all()
+    return [ThreadMessage(author=r.author, body=r.body, created_at=r.created_at) for r in rows]
+
+
+def add_message(db: Session, application_id: str, author: str, body: str) -> None:
+    db.add(ApplicationMessage(application_id=application_id, author=author, body=body))
 
 
 def _emi(a: Application) -> float | None:
@@ -113,18 +128,27 @@ def mask_phone(phone: str) -> str:
 def to_result(a: Application, db: Session | None = None) -> ApplicationResult:
     emi = _emi(a)
     created = a.created_at if a.created_at.tzinfo else a.created_at.replace(tzinfo=timezone.utc)
+    pending = a.final_decision == "PENDING"
+    # Explain the officer's final decision (it may differ from the model's recommendation).
+    factors = [] if pending else dec.indicative_factors(
+        a.engineered_features,
+        {"House_Ownership": a.house_ownership, "Car_Ownership": a.car_ownership},
+        get_predictor().metadata["medians"],
+        a.final_decision,
+    )
     return ApplicationResult(
         application_id=a.application_id,
         decision=a.final_decision,
-        model_decision=a.decision,
+        # The model's view stays internal until an officer has decided.
+        model_decision=None if pending else a.decision,
         status=a.status,
-        risk_class=a.risk_class,
-        default_probability=round(a.default_probability, 4),
-        approval_score=round(1 - a.default_probability, 4),
-        confidence=round(a.confidence, 4),
-        risk_band=a.risk_band,
-        indicative_factors=a.indicative_factors,
-        engineered_features=a.engineered_features,
+        risk_class=None if pending else a.risk_class,
+        default_probability=None if pending else round(a.default_probability, 4),
+        approval_score=None if pending else round(1 - a.default_probability, 4),
+        confidence=None if pending else round(a.confidence, 4),
+        risk_band=None if pending else a.risk_band,
+        indicative_factors=factors,
+        engineered_features={} if pending else a.engineered_features,
         warnings=a.warnings,
         estimated_emi=emi,
         interest_rate=a.interest_rate,
@@ -134,6 +158,8 @@ def to_result(a: Application, db: Session | None = None) -> ApplicationResult:
         officer_note_present=bool(a.officer_note),
         phone_verified=bool(a.phone_verified),
         emails=application_emails(db, a.application_id) if db is not None else [],
+        messages=thread(db, a.application_id),
+        decided_at=None if pending else a.reviewed_at,
         applicant=ApplicantSummary(
             full_name=a.full_name,
             email=a.email,

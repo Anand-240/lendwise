@@ -30,6 +30,13 @@ type Values = z.infer<typeof schema>;
 export function StatusLookup({ defaultId, intro }: { defaultId?: string; intro?: React.ReactNode }) {
   const [result, setResult] = useState<ApplicationResult | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [query, setQuery] = useState<{ id: string; email: string } | null>(null);
+
+  async function refresh() {
+    if (!query) return;
+    const res = await fetch(`/api/status?id=${encodeURIComponent(query.id)}&email=${encodeURIComponent(query.email)}`, { cache: "no-store" });
+    if (res.ok) setResult(await res.json());
+  }
   const {
     register,
     handleSubmit,
@@ -42,7 +49,10 @@ export function StatusLookup({ defaultId, intro }: { defaultId?: string; intro?:
     try {
       const res = await fetch(`/api/status?id=${encodeURIComponent(id)}&email=${encodeURIComponent(email)}`, { cache: "no-store" });
       const body = await res.json().catch(() => null);
-      if (res.ok) return setResult(body);
+      if (res.ok) {
+        setQuery({ id, email });
+        return setResult(body);
+      }
       if (res.status === 404) return setNotFound(true);
       toast.error(res.status === 503 ? "Service temporarily unavailable" : "Couldn’t check status", { description: body?.error?.message });
     } catch {
@@ -98,7 +108,7 @@ export function StatusLookup({ defaultId, intro }: { defaultId?: string; intro?:
             <Skeleton className="h-40 w-full rounded-lg" />
           </div>
         )}
-        {result && <DecisionView result={result} />}
+        {result && <DecisionView result={result} lookupEmail={query?.email} onRefresh={refresh} />}
       </div>
     </div>
   );

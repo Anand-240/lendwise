@@ -13,8 +13,8 @@ export const revalidate = 300;
 const STEPS = [
   { title: "Apply online", text: "Five short sections covering your details, work, residence and the loan you need. About three minutes." },
   { title: "Risk assessment", text: "Your profile is converted into 414 model features and scored by a Random Forest risk model." },
-  { title: "Decision", text: "You see the outcome on screen straight away, with the risk band and the main factors behind it." },
-  { title: "Next steps", text: "Download your decision letter, and track your application at any time with its ID." },
+  { title: "Officer review", text: "A loan officer reviews the assessment and approves, declines or asks you for more information." },
+  { title: "Decision", text: "You’re emailed the decision and can download your letter and track your application any time." },
 ];
 
 function SectionHeading({ title, text, action, id }: { title: string; text?: string; action?: React.ReactNode; id?: string }) {
@@ -42,11 +42,11 @@ export default async function HomePage() {
           <div className="lg:pt-6">
             <p className="text-sm font-medium text-brand">Personal, home, vehicle, education and business loans</p>
             <h1 className="mt-3 text-[2.25rem] font-semibold leading-[1.15] text-navy sm:text-5xl">
-              Loans up to ₹1 crore, with a decision in under a minute
+              Loans up to ₹1 crore, assessed in under a minute
             </h1>
             <p className="mt-5 max-w-xl text-lg leading-relaxed text-stone-600">
-              Apply online in about three minutes. We assess your profile with a risk model trained on 2.5 lakh past applications and show
-              you the outcome immediately, along with the reasons.
+              Apply online in about three minutes. A risk model trained on 2.5 lakh past applications assesses your profile instantly,
+              and a loan officer makes the final decision, with the reasons explained.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <ButtonLink href="/apply" variant="brand" size="lg">
@@ -89,7 +89,7 @@ export default async function HomePage() {
           {[
             [accuracy, "model accuracy on 50,400 held-out applications"],
             [md ? formatNumber(md.training_rows) : "2,52,000", "historical applications used to train the model"],
-            ["Under 1 min", "typical time from submission to decision"],
+            ["Under 1 min", "for the risk assessment after you submit"],
             ["No documents", "needed to receive a decision online"],
           ].map(([v, k]) => (
             <div key={k} className="py-6 md:px-6 md:first:pl-0">

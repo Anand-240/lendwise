@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   CalendarClock,
@@ -25,7 +26,8 @@ import { Disclaimer } from "@/components/site/disclaimer";
 import { Gauge } from "./gauge";
 import { EmailPreview, EmailStatusBadge, type PreviewEmail } from "@/components/site/email-preview";
 import { formatDate, formatINR, formatLakhCrore, formatNumber, formatPercent, formatTenure } from "@/lib/format";
-import type { ApplicationResult, RiskBand } from "@/lib/types";
+import type { ApplicationResult, DecidedResult, RiskBand } from "@/lib/types";
+import { PendingView, ThreadList } from "./pending-view";
 import { cn } from "@/lib/utils";
 
 const FEATURE_LABELS: Record<string, { label: string; fmt: (v: number) => string; help: string }> = {
@@ -56,7 +58,7 @@ const TIPS = [
   "Keep your existing credit obligations low and repay on time.",
 ];
 
-export function DecisionView({ result }: { result: ApplicationResult }) {
+function DecidedView({ result }: { result: DecidedResult }) {
   const [downloading, setDownloading] = useState(false);
   const [preview, setPreview] = useState<PreviewEmail | null>(null);
   const approved = result.decision === "APPROVED";
@@ -95,7 +97,7 @@ export function DecisionView({ result }: { result: ApplicationResult }) {
       {result.status === "Overridden" && (
         <div role="note" className="flex gap-3 rounded-md border border-brand-line bg-brand-soft p-4 text-sm text-brand-deep">
           <UserCheck className="mt-0.5 size-5 shrink-0" aria-hidden />
-          <p>This decision was reviewed and updated by a loan officer. The original automated assessment is shown under “How this decision was made”.</p>
+          <p>The loan officer’s final decision differs from the risk model’s recommendation. Both are shown under “How this decision was made”.</p>
         </div>
       )}
 
@@ -127,8 +129,8 @@ export function DecisionView({ result }: { result: ApplicationResult }) {
             </h1>
             <p className="mt-3 max-w-xl text-stone-600">
               {approved
-                ? "Our risk model assessed your profile as low risk. Here’s a summary of your approved loan and what happens next."
-                : "Thank you for applying. Our risk model assessed your profile as higher risk for this loan. We know this isn’t the news you hoped for — below are indicative factors and steps that can help."}
+                ? "Your application has been reviewed and approved by a loan officer. Here’s a summary of your loan and what happens next."
+                : "Thank you for applying. After a review by a loan officer, we can’t approve this application right now. We know this isn’t the news you hoped for. Below are indicative factors and steps that can help."}
             </p>
             <dl className="mt-6 flex flex-wrap gap-x-8 gap-y-3 text-sm">
               <div>
@@ -259,6 +261,15 @@ export function DecisionView({ result }: { result: ApplicationResult }) {
             </>
           )}
 
+          {result.messages.length > 0 && (
+            <section className="rounded-lg border border-stone-200 bg-white p-6" aria-labelledby="thread-heading">
+              <h2 id="thread-heading" className="text-lg font-semibold text-navy">Messages with the loan officer</h2>
+              <div className="mt-4">
+                <ThreadList messages={result.messages} />
+              </div>
+            </section>
+          )}
+
           <Accordion className="rounded-lg bg-white px-6 border border-stone-200">
             <AccordionItem value="how">
               <AccordionTrigger className="py-5 text-base font-semibold text-navy">How this decision was made</AccordionTrigger>
@@ -270,7 +281,7 @@ export function DecisionView({ result }: { result: ApplicationResult }) {
                     "One-hot encoding → 414 features",
                     "Standard scaling (numeric features)",
                     "Random Forest (100 trees)",
-                    "Class 0 → approve · Class 1 → decline",
+                    "Model recommendation, then a loan officer’s final decision",
                   ].map((s, i) => (
                     <li key={s} className="rounded-lg bg-stone-50 p-3">
                       <span className="text-xs font-semibold text-brand">Step {i + 1}</span>
@@ -308,8 +319,12 @@ export function DecisionView({ result }: { result: ApplicationResult }) {
                     <dd className="font-medium">{result.risk_class} — {result.risk_class === 0 ? "low risk" : "high risk"}</dd>
                   </div>
                   <div>
-                    <dt className="text-xs text-stone-500">Automated decision</dt>
-                    <dd className="font-medium">{result.model_decision}</dd>
+                    <dt className="text-xs text-stone-500">Model recommendation</dt>
+                    <dd className="font-medium">{result.model_decision === "APPROVED" ? "Approve" : "Decline"}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-stone-500">Final decision</dt>
+                    <dd className="font-medium">{result.decision === "APPROVED" ? "Approved" : "Declined"} by a loan officer</dd>
                   </div>
                   <div>
                     <dt className="text-xs text-stone-500">Default probability</dt>
@@ -330,56 +345,9 @@ export function DecisionView({ result }: { result: ApplicationResult }) {
         </div>
 
         <aside className="min-w-0 space-y-6">
-          <section className="rounded-lg bg-white p-6 border border-stone-200" aria-labelledby="summary-heading">
-            <h2 id="summary-heading" className="text-lg font-semibold text-navy">Applicant summary</h2>
-            <dl className="mt-4 divide-y divide-stone-100 text-sm">
-              {[
-                ["Name", a.full_name],
-                ["Email", a.email],
-                ["Mobile", `${a.phone_masked}${result.phone_verified ? " · verified" : ""}`],
-                ["Age", `${a.age} yrs`],
-                ["Marital status", a.marital_status],
-                ["Profession", a.profession],
-                ["Experience", `${a.experience} yrs (${a.current_job_years} in current job)`],
-                ["Annual income", formatINR(a.income)],
-                ["Location", `${a.city}, ${a.state}`],
-                ["House", `${a.house_ownership} · ${a.current_house_years} yrs`],
-                ["Car ownership", a.car_ownership],
-                ["Loan", `${formatINR(a.loan_amount)} · ${a.tenure_months} mo`],
-                ["Purpose", a.purpose],
-              ].map(([k, v]) => (
-                <div key={k} className="flex justify-between gap-4 py-2.5">
-                  <dt className="text-stone-500">{k}</dt>
-                  <dd className="min-w-0 break-words text-right font-medium text-stone-900">{v}</dd>
-                </div>
-              ))}
-            </dl>
-          </section>
+          <ApplicantSummaryCard result={result} />
 
-          {result.emails.length > 0 && (
-            <section className="rounded-lg border border-stone-200 bg-white p-6" aria-labelledby="emails-heading">
-              <h2 id="emails-heading" className="text-lg font-semibold text-navy">Your messages</h2>
-              <ul className="mt-3 divide-y divide-stone-100">
-                {result.emails.map((e) => (
-                  <li key={e.id} className="flex items-start justify-between gap-3 py-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-stone-900">{e.subject}</p>
-                      <p className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-stone-500">
-                        {e.to_masked} <EmailStatusBadge status={e.status} hideUnsent />
-                      </p>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPreview({ subject: e.subject, to: e.to_masked, created_at: e.created_at, status: e.status, html: e.html })}
-                    >
-                      View
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
+          <EmailsPanel result={result} onPreview={setPreview} />
 
           {result.warnings.length > 0 && (
             <section className="rounded-lg border border-amber-200 bg-amber-50 p-5" aria-labelledby="warn-heading">
@@ -413,6 +381,97 @@ export function DecisionView({ result }: { result: ApplicationResult }) {
         </aside>
       </div>
 
+      <Disclaimer />
+      <EmailPreview email={preview} onClose={() => setPreview(null)} internal={false} />
+    </div>
+  );
+}
+
+function ApplicantSummaryCard({ result }: { result: ApplicationResult }) {
+  const a = result.applicant;
+  return (
+    <section className="rounded-lg bg-white p-6 border border-stone-200" aria-labelledby="summary-heading">
+            <h2 id="summary-heading" className="text-lg font-semibold text-navy">Applicant summary</h2>
+            <dl className="mt-4 divide-y divide-stone-100 text-sm">
+              {[
+                ["Name", a.full_name],
+                ["Email", a.email],
+                ["Mobile", `${a.phone_masked}${result.phone_verified ? " · verified" : ""}`],
+                ["Age", `${a.age} yrs`],
+                ["Marital status", a.marital_status],
+                ["Profession", a.profession],
+                ["Experience", `${a.experience} yrs (${a.current_job_years} in current job)`],
+                ["Annual income", formatINR(a.income)],
+                ["Location", `${a.city}, ${a.state}`],
+                ["House", `${a.house_ownership} · ${a.current_house_years} yrs`],
+                ["Car ownership", a.car_ownership],
+                ["Loan", `${formatINR(a.loan_amount)} · ${a.tenure_months} mo`],
+                ["Purpose", a.purpose],
+              ].map(([k, v]) => (
+                <div key={k} className="flex justify-between gap-4 py-2.5">
+                  <dt className="text-stone-500">{k}</dt>
+                  <dd className="min-w-0 break-words text-right font-medium text-stone-900">{v}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+  );
+}
+
+function EmailsPanel({ result, onPreview }: { result: ApplicationResult; onPreview: (p: PreviewEmail) => void }) {
+  if (result.emails.length === 0) return null;
+  return (
+<section className="rounded-lg border border-stone-200 bg-white p-6" aria-labelledby="emails-heading">
+              <h2 id="emails-heading" className="text-lg font-semibold text-navy">Your messages</h2>
+              <ul className="mt-3 divide-y divide-stone-100">
+                {result.emails.map((e) => (
+                  <li key={e.id} className="flex items-start justify-between gap-3 py-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-stone-900">{e.subject}</p>
+                      <p className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-stone-500">
+                        {e.to_masked} <EmailStatusBadge status={e.status} hideUnsent />
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onPreview({ subject: e.subject, to: e.to_masked, created_at: e.created_at, status: e.status, html: e.html })}
+                    >
+                      View
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+  );
+}
+
+export function DecisionView({
+  result,
+  lookupEmail,
+  onRefresh,
+}: {
+  result: ApplicationResult;
+  lookupEmail?: string;
+  onRefresh?: () => void;
+}) {
+  const router = useRouter();
+  const [preview, setPreview] = useState<PreviewEmail | null>(null);
+  if (result.decision !== "PENDING") return <DecidedView result={result as DecidedResult} />;
+  return (
+    <div className="space-y-6">
+      <PendingView result={result} lookupEmail={lookupEmail} onRefresh={onRefresh ?? (() => router.refresh())} />
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="min-w-0">
+          <ApplicantSummaryCard result={result} />
+        </div>
+        <div className="min-w-0 space-y-6">
+          <EmailsPanel result={result} onPreview={setPreview} />
+          <p className="flex items-center gap-2 text-xs text-stone-500">
+            <ShieldCheck className="size-4 text-emerald-600" aria-hidden /> Save your application ID to check your status later.
+          </p>
+        </div>
+      </div>
       <Disclaimer />
       <EmailPreview email={preview} onClose={() => setPreview(null)} internal={false} />
     </div>

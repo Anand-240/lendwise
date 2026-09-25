@@ -1,4 +1,4 @@
-import type { ApplicationResult } from "./types";
+import type { DecidedResult } from "./types";
 import { DISCLAIMER, SITE_URL } from "./site";
 
 // jsPDF's built-in fonts don't include the ₹ glyph, so amounts use "Rs." in the letter.
@@ -6,7 +6,7 @@ const rs = (n: number) => `Rs. ${new Intl.NumberFormat("en-IN").format(Math.roun
 const dateStr = (iso: string) =>
   new Date(iso).toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric", timeZone: "Asia/Kolkata" });
 
-export async function downloadDecisionLetter(r: ApplicationResult) {
+export async function downloadDecisionLetter(r: DecidedResult) {
   const { jsPDF } = await import("jspdf");
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const W = doc.internal.pageSize.getWidth();

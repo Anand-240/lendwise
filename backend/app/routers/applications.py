@@ -9,9 +9,9 @@ from app.config import get_settings
 from app.db import get_db
 from app.middleware import RateLimiter, client_key
 from app.models_db import Application
-from app.schemas import ApplicationCreate, ApplicationCreated, ApplicationResult
+from app.schemas import ApplicantReplyIn, ApplicationCreate, ApplicationCreated, ApplicationResult
 from app.otp import token_matches
-from app.services import submit_application, to_result
+from app.services import add_message, submit_application, to_result
 
 router = APIRouter(prefix="/applications", tags=["public"])
 
@@ -72,4 +72,29 @@ def application_by_token(
     row = db.scalar(select(Application).where(Application.application_id == application_id.strip().upper()))
     if row is None or not hmac.compare_digest(row.access_token, x_access_token):
         raise HTTPException(status_code=404, detail=NOT_FOUND)
+    return to_result(row, db)
+
+
+@router.post("/{application_id}/reply", response_model=ApplicationResult)
+def applicant_reply(
+    application_id: str,
+    body: ApplicantReplyIn,
+    request: Request,
+    x_access_token: str | None = Header(default=None, max_length=128),
+    db: Session = Depends(get_db),
+):
+    """The applicant answers an officer's request for more information. Authorised by the private
+    access token (same browser) or by the email the application was made with."""
+    _throttle(lookup_limiter, request)
+    row = db.scalar(select(Application).where(Application.application_id == application_id.strip().upper()))
+    token_ok = bool(row and x_access_token and hmac.compare_digest(row.access_token, x_access_token))
+    email_ok = bool(row and body.email and hmac.compare_digest(row.email, body.email.strip().lower()))
+    if row is None or not (token_ok or email_ok):
+        raise HTTPException(status_code=404, detail=NOT_FOUND)
+    if row.status != "Info Requested":
+        raise HTTPException(status_code=409, detail="This application isn’t waiting for more information right now.")
+    add_message(db, row.application_id, "applicant", body.message)
+    row.status = "Pending Review"
+    db.commit()
+    db.refresh(row)
     return to_result(row, db)
