@@ -2,7 +2,7 @@ export const FAQS: { q: string; a: string; category: "General" | "Decision" | "P
   {
     category: "General",
     q: "What is LendWise?",
-    a: "LendWise is a demonstration loan platform. You fill in an application and a trained Random Forest model assesses your default risk to produce an instant, explainable decision. It is built for education and is not an actual credit offer.",
+    a: "LendWise is an online loan application platform. You fill in an application and a trained Random Forest model assesses your default risk to produce an instant, explainable decision. Decisions are not an actual credit offer.",
   },
   {
     category: "Decision",

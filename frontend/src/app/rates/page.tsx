@@ -30,7 +30,7 @@ export default async function RatesPage() {
       <PageHeader
         eyebrow="Rates & charges"
         title="Rates & charges"
-        description="The same terms apply to every loan type. All figures are indicative for this demo platform and are not an offer of credit."
+        description="The same terms apply to every loan type. All figures are indicative and are not an offer of credit."
       />
       <div className="container-page grid gap-12 py-12 lg:grid-cols-[1fr_20rem]">
         <div className="min-w-0 space-y-12">

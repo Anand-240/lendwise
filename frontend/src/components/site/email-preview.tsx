@@ -6,9 +6,10 @@ import { cn } from "@/lib/utils";
 
 export type PreviewEmail = { subject: string; to: string; created_at: string; status: string; html: string; error?: string | null };
 
-export function EmailStatusBadge({ status }: { status: string }) {
+export function EmailStatusBadge({ status, hideUnsent = false }: { status: string; hideUnsent?: boolean }) {
+  if (hideUnsent && status === "demo") return null;
   const map: Record<string, [string, string]> = {
-    demo: ["Demo — not delivered", "bg-amber-50 text-amber-900 ring-amber-200"],
+    demo: ["Saved, not sent", "bg-amber-50 text-amber-900 ring-amber-200"],
     queued: ["Sending", "bg-stone-100 text-stone-700 ring-stone-200"],
     sent: ["Delivered to provider", "bg-emerald-50 text-emerald-800 ring-emerald-200"],
     failed: ["Failed", "bg-rose-50 text-rose-800 ring-rose-200"],
@@ -18,7 +19,15 @@ export function EmailStatusBadge({ status }: { status: string }) {
 }
 
 /** Shows an email exactly as the recipient would see it, in a sandboxed iframe (no scripts). */
-export function EmailPreview({ email, onClose }: { email: PreviewEmail | null; onClose: () => void }) {
+export function EmailPreview({
+  email,
+  onClose,
+  internal = true,
+}: {
+  email: PreviewEmail | null;
+  onClose: () => void;
+  internal?: boolean;
+}) {
   return (
     <Dialog open={!!email} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-h-[92dvh] w-[calc(100%-2rem)] max-w-2xl overflow-hidden p-0 sm:max-w-2xl">
@@ -30,11 +39,11 @@ export function EmailPreview({ email, onClose }: { email: PreviewEmail | null; o
                 <span>To {email.to}</span>
                 <span aria-hidden>·</span>
                 <span>{formatDate(email.created_at, true)}</span>
-                <EmailStatusBadge status={email.status} />
+                <EmailStatusBadge status={email.status} hideUnsent={!internal} />
               </DialogDescription>
-              {email.status === "demo" && (
+              {internal && email.status === "demo" && (
                 <p className="mt-2 text-xs text-amber-900">
-                  Demo mode: this email was captured, not sent. Add a <code className="font-mono">RESEND_API_KEY</code> to deliver emails.
+                  Email delivery is off, so this email was saved but not sent. Add a <code className="font-mono">RESEND_API_KEY</code> to deliver emails.
                 </p>
               )}
               {email.error && <p className="mt-2 text-xs text-danger">Delivery error: {email.error}</p>}

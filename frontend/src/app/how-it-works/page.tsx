@@ -113,7 +113,7 @@ export default async function HowItWorksPage() {
               <li>The model learns from historical outcomes, which may reflect past inequities. Features such as <strong>city, state and profession</strong> can act as proxies for socio-economic or demographic characteristics and may encode bias.</li>
               <li>Marital status and age are used as inputs. In real lending, the use of such attributes is subject to regulation and careful fairness review.</li>
               <li>Every decision can be reviewed and overridden by a loan officer, with the original model decision retained for audit.</li>
-              <li>LendWise is an educational demo — it should not be used to make real credit decisions.</li>
+              <li>The model’s output should not be the sole basis for real credit decisions.</li>
             </ul>
           </div>
         </div>

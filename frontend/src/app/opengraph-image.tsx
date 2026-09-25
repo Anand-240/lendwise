@@ -32,7 +32,7 @@ export default function OpengraphImage() {
           <div style={{ fontSize: 72, fontWeight: 800, lineHeight: 1.05 }}>Instant AI-powered loan decisions</div>
           <div style={{ fontSize: 30, color: "#E6C878" }}>Apply in minutes · Decision in seconds · 100% digital</div>
         </div>
-        <div style={{ fontSize: 22, color: "#A8A29E" }}>ML-powered demo platform · not an actual credit offer</div>
+        <div style={{ fontSize: 22, color: "#A8A29E" }}>Apply online · Instant decisions · 100% digital</div>
       </div>
     ),
     size,

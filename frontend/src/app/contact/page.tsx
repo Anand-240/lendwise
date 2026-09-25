@@ -11,13 +11,12 @@ export const metadata: Metadata = {
 export default function ContactPage() {
   return (
     <>
-      <PageHeader eyebrow="Contact" title="We’re here to help" description="Questions about an application, the model or this demo? Send us a message." />
+      <PageHeader eyebrow="Contact" title="We’re here to help" description="Questions about an application or how decisions are made? Send us a message." />
       <section className="container-page grid gap-10 py-16 lg:grid-cols-[1fr_1.5fr]">
         <div>
           <h2 className="border-b border-stone-200 pb-3 text-xl font-semibold text-navy">Customer support</h2>
           <dl className="divide-y divide-stone-200 text-sm">
             {[
-              ["Email", "support@lendwise.demo"],
               ["Hours", "Monday to Saturday, 9:30 am – 6:30 pm IST"],
               ["Response time", "Within two business days"],
               ["Office", "Bengaluru, Karnataka, India"],

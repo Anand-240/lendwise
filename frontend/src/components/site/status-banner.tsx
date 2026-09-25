@@ -29,7 +29,7 @@ export function StatusBanner() {
       <div role="status" className="no-print border-b border-amber-200 bg-amber-50 text-amber-900">
         <p className="container-page flex items-center justify-center gap-2 py-2 text-center text-sm font-medium">
           <FlaskConical className="size-4 shrink-0" aria-hidden />
-          Demo mode — ML model not loaded. Decisions are simulated and are not real model outputs.
+          Our risk model is temporarily unavailable. Decisions shown now are provisional.
         </p>
       </div>
     );

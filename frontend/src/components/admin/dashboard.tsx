@@ -264,7 +264,7 @@ export function AdminDashboard() {
         </section>
         {stats && stats.demo_count > 0 && (
           <p className="flex items-center gap-2 text-xs text-amber-800">
-            <FlaskConical className="size-4" aria-hidden /> {stats.demo_count} application(s) were processed in demo mode (simulated decisions).
+            <FlaskConical className="size-4" aria-hidden /> {stats.demo_count} application(s) were decided while the risk model was unavailable (provisional decisions).
           </p>
         )}
 
@@ -359,7 +359,7 @@ export function AdminDashboard() {
                           <button type="button" onClick={() => setSelected(a)} className="font-mono text-xs font-semibold text-brand hover:underline">
                             {a.application_id}
                           </button>
-                          {a.is_demo && <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">DEMO</span>}
+                          {a.is_demo && <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">PROVISIONAL</span>}
                         </td>
                         <td className="px-4 py-3">
                           <p className="font-medium text-stone-900">{a.full_name}</p>
@@ -475,7 +475,7 @@ function MessagesInbox({
       });
       const body = await res.json().catch(() => null);
       if (!res.ok) throw new Error(body?.error?.message ?? "Couldn’t send the reply.");
-      toast.success(body.status === "demo" ? "Reply captured in the outbox (demo mode — not delivered)" : "Reply sent");
+      toast.success(body.status === "demo" ? "Reply saved in the outbox (email delivery is off)" : "Reply sent");
       setReplyText("");
       setReplyTo(null);
       setLocalKey((k) => k + 1);
@@ -670,7 +670,7 @@ function EmailOutbox({ reloadKey }: { reloadKey: number }) {
         {data && (
           <p className={cn("text-xs", data.mode === "demo" ? "text-amber-900" : "text-emerald-800")}>
             {data.mode === "demo"
-              ? "Demo mode: emails are captured here, not delivered. Add RESEND_API_KEY to send them."
+              ? "Email delivery is off: emails are saved here, not sent. Add RESEND_API_KEY to send them."
               : "Live: emails are delivered through Resend."}
           </p>
         )}
@@ -810,7 +810,7 @@ function ApplicationDrawer({
             </SheetHeader>
             <div className="space-y-6 px-4 pb-8">
               {a.is_demo && (
-                <p className="rounded-lg bg-amber-50 p-3 text-xs text-amber-900">Processed in demo mode — simulated decision, not a model output.</p>
+                <p className="rounded-lg bg-amber-50 p-3 text-xs text-amber-900">Decided while the risk model was unavailable (provisional decision, not a model output).</p>
               )}
               <section>
                 <h3 className="text-sm font-semibold text-navy">Model output</h3>

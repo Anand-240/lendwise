@@ -1,5 +1,5 @@
 import type { ApplicationResult } from "./types";
-import { DISCLAIMER } from "./site";
+import { DISCLAIMER, SITE_URL } from "./site";
 
 // jsPDF's built-in fonts don't include the ₹ glyph, so amounts use "Rs." in the letter.
 const rs = (n: number) => `Rs. ${new Intl.NumberFormat("en-IN").format(Math.round(n))}`;
@@ -32,7 +32,7 @@ export async function downloadDecisionLetter(r: ApplicationResult) {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.text("Instant AI-powered loan decisions", M + 16, 22.5);
-  doc.text("lendwise.demo", W - M, 17.5, { align: "right" });
+  doc.text(new URL(SITE_URL).host, W - M, 17.5, { align: "right" });
 
   let y = 44;
   doc.setTextColor(87, 83, 78);
@@ -123,7 +123,7 @@ export async function downloadDecisionLetter(r: ApplicationResult) {
   doc.setFontSize(8.5);
   doc.setTextColor(120, 113, 108);
   const footer = doc.splitTextToSize(
-    `${r.is_demo ? "DEMO MODE: simulated decision, not a model output. " : ""}${DISCLAIMER} Model: ${r.model_version}.`,
+    `${r.is_demo ? "PROVISIONAL: decided while the risk model was unavailable. " : ""}${DISCLAIMER} Model: ${r.model_version}.`,
     W - 2 * M,
   );
   const fy = doc.internal.pageSize.getHeight() - 12 - footer.length * 3.8;

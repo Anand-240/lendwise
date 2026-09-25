@@ -13,7 +13,7 @@ export default function PrivacyPage() {
     <>
       <PageHeader eyebrow="Legal" title="Privacy policy" />
       <LegalBody updated="25 September 2026">
-        <p>LendWise is an educational demonstration platform. This policy explains what we collect when you use it and how we handle it.</p>
+        <p>This policy explains what LendWise collects when you use it and how we handle it.</p>
         <h2>Information we collect</h2>
         <ul>
           <li><strong>Identity & contact:</strong> full name, email address and mobile number.</li>
@@ -38,11 +38,11 @@ export default function PrivacyPage() {
           your application ID together with your email. Officer access requires authentication. Personal details are never written to application logs.
         </p>
         <h2>Sharing</h2>
-        <p>We do not sell or share your information with third parties for marketing. As a demo, LendWise does not share data with credit bureaus or lenders.</p>
+        <p>We do not sell or share your information with third parties for marketing. LendWise does not share data with credit bureaus or lenders.</p>
         <h2>Retention & your choices</h2>
-        <p>Demo data may be cleared periodically. To request deletion of an application, use the contact form with the topic “Privacy”, your application ID and the email you applied with. An officer will permanently delete the record.</p>
+        <p>Data may be cleared periodically. To request deletion of an application, use the contact form with the topic “Privacy”, your application ID and the email you applied with. An officer will permanently delete the record.</p>
         <h2>Contact</h2>
-        <p>Questions? Email support@lendwise.demo or use our <a className="text-brand underline" href="/contact">contact form</a>.</p>
+        <p>Questions? Use our <a className="text-brand underline" href="/contact">contact form</a>.</p>
       </LegalBody>
     </>
   );

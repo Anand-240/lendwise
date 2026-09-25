@@ -5,7 +5,7 @@ import { Disclaimer } from "@/components/site/disclaimer";
 
 export const metadata: Metadata = {
   title: "About",
-  description: "LendWise is an educational demo of transparent, ML-powered loan decisions.",
+  description: "LendWise makes instant, transparent, ML-powered loan decisions.",
   alternates: { canonical: "/about" },
 };
 
@@ -13,7 +13,7 @@ const VALUES = [
   { title: "Transparency", text: "We show what the model uses, how it performs and where it falls short." },
   { title: "Speed with care", text: "Instant decisions, delivered respectfully — especially when the answer is no." },
   { title: "Human oversight", text: "Automation assists; loan officers can always review and override." },
-  { title: "Education first", text: "LendWise exists to demonstrate responsible ML in lending, not to issue credit." },
+  { title: "Responsible by design", text: "LendWise shows how machine learning can be used responsibly in lending. It does not issue credit." },
 ];
 
 export default function AboutPage() {
@@ -22,7 +22,7 @@ export default function AboutPage() {
       <PageHeader
         eyebrow="About LendWise"
         title="Making automated lending decisions understandable"
-        description="LendWise is a demonstration platform that shows how a machine-learning risk model can power instant loan decisions — and how to present them honestly."
+        description="LendWise uses a machine-learning risk model to give instant loan decisions, and explains every one of them clearly."
       />
       <section className="container-page grid gap-12 py-16 lg:grid-cols-2">
         <div className="space-y-4 text-stone-700">

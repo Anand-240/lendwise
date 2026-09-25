@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CheckCircle2, FlaskConical, Loader2, ShieldCheck } from "lucide-react";
+import { CheckCircle2, KeyRound, Loader2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { OtpSent } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -115,14 +115,14 @@ export function PhoneVerify({ phone, verified, onVerified, error }: Props) {
       ) : (
         <div className="space-y-3">
           <p className="text-sm text-stone-700">
-            Enter the 6-digit code sent to <span className="font-medium">+91 {active.phone_masked}</span>. It expires in{" "}
+            Enter the 6-digit code for <span className="font-medium">+91 {active.phone_masked}</span>. It expires in{" "}
             {Math.round(active.expires_in / 60)} minutes.
           </p>
           {active.demo_code && (
             <div className="flex flex-wrap items-center gap-2 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900" role="note">
-              <FlaskConical className="size-4 shrink-0" aria-hidden />
+              <KeyRound className="size-4 shrink-0" aria-hidden />
               <span>
-                Demo mode — no SMS is sent. Your code is <strong className="font-mono tracking-widest">{active.demo_code}</strong>
+                Your verification code is <strong className="font-mono tracking-widest">{active.demo_code}</strong>
               </span>
               <button
                 type="button"

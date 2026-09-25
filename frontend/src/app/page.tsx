@@ -71,7 +71,7 @@ export default async function HomePage() {
               ))}
             </dl>
             <p className="mt-3 text-xs text-stone-500">
-              *Indicative terms on this demo platform. See{" "}
+              *Indicative terms. See{" "}
               <Link href="/rates" className="underline hover:text-navy">
                 rates &amp; charges
               </Link>
@@ -260,7 +260,7 @@ export default async function HomePage() {
                   ))}
               </tbody>
             </table>
-            <p className="mt-3 text-xs text-stone-500">Indicative terms for this demo platform.</p>
+            <p className="mt-3 text-xs text-stone-500">All terms are indicative.</p>
           </div>
           <div>
             <h2 className="border-b border-stone-200 pb-4 text-2xl font-semibold text-navy">Security &amp; privacy</h2>

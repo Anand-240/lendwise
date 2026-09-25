@@ -56,7 +56,7 @@ export function SiteFooter() {
           <p className="text-sm">
             Customer support
             <br />
-            <span className="text-white">support@lendwise.demo</span>
+            <Link href="/contact" className="text-white hover:underline">Contact form</Link>
             <br />
             <span className="text-xs text-stone-400">Mon–Sat, 9:30 am – 6:30 pm IST</span>
           </p>

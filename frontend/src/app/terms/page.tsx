@@ -5,7 +5,7 @@ import { DISCLAIMER } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Terms of use",
-  description: "Terms governing use of the LendWise demo platform.",
+  description: "Terms governing use of LendWise.",
   alternates: { canonical: "/terms" },
 };
 
@@ -19,11 +19,11 @@ export default function TermsPage() {
         <p>{DISCLAIMER} No loan will be disbursed, and an approval on LendWise creates no obligation on anyone to lend.</p>
         <h2>Your responsibilities</h2>
         <ul>
-          <li>Provide information that is accurate to the best of your knowledge. Please avoid entering sensitive real data you are not comfortable sharing with a demo.</li>
+          <li>Provide information that is accurate to the best of your knowledge. Please avoid entering sensitive information you are not comfortable sharing online.</li>
           <li>Do not attempt to disrupt, overload, scrape or gain unauthorised access to the service.</li>
         </ul>
         <h2>Estimates</h2>
-        <p>EMI figures use a fixed demonstration interest rate and a standard reducing-balance formula. They are indicative only.</p>
+        <p>EMI figures use a fixed indicative interest rate and a standard reducing-balance formula. They are indicative only.</p>
         <h2>Model limitations</h2>
         <p>The model may be wrong and may reflect biases in historical data. Do not rely on it for real financial decisions.</p>
         <h2>Liability</h2>

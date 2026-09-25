@@ -23,7 +23,7 @@ export function SiteHeader() {
     <header className="no-print sticky top-0 z-40 bg-white">
       <div className="hidden border-b border-stone-200 bg-stone-50 md:block">
         <div className="container-page flex h-9 items-center justify-between text-xs text-stone-600">
-          <p>Demo lending platform · Decisions are illustrative and not a credit offer</p>
+          <p>Instant loan decisions · 100% online</p>
           <nav aria-label="Utility" className="flex items-center divide-x divide-stone-300">
             {UTILITY_LINKS.map((l) => (
               <Link key={l.href} href={l.href} className="px-3 last:pr-0 hover:text-navy hover:underline">

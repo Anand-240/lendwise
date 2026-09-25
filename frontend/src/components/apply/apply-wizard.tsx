@@ -621,7 +621,7 @@ export function ApplyWizard({ metadata }: { metadata: Metadata }) {
                           <a href="/privacy" target="_blank" className="font-medium text-brand underline underline-offset-2">
                             privacy policy
                           </a>
-                          . I understand this is a demo and not an actual credit offer.
+                          . I understand this decision is not an actual credit offer.
                         </span>
                       </label>
                     )}

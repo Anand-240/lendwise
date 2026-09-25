@@ -81,7 +81,7 @@ export function DecisionView({ result }: { result: ApplicationResult }) {
         <div role="note" className="flex gap-3 rounded-md border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
           <FlaskConical className="mt-0.5 size-5 shrink-0" aria-hidden />
           <p>
-            <strong>Demo mode — simulated decision.</strong> The ML model was not loaded when this application was processed, so this
+            <strong>Provisional decision.</strong> The risk model was unavailable when this application was processed, so this
             result comes from a placeholder rule and is <strong>not</strong> a real model decision.
           </p>
         </div>
@@ -165,7 +165,7 @@ export function DecisionView({ result }: { result: ApplicationResult }) {
               { k: "Approved amount", v: formatINR(a.loan_amount), sub: formatLakhCrore(a.loan_amount) },
               { k: "Tenure", v: `${a.tenure_months} months`, sub: formatTenure(a.tenure_months) },
               { k: "Indicative EMI", v: result.estimated_emi ? formatINR(Math.round(result.estimated_emi)) : "—", sub: "per month" },
-              { k: "Indicative rate", v: `${result.interest_rate}% p.a.`, sub: "demo rate" },
+              { k: "Indicative rate", v: `${result.interest_rate}% p.a.`, sub: "indicative" },
             ].map((x) => (
               <div key={x.k} className="bg-white p-5">
                 <p className="text-xs text-stone-500">{x.k}</p>
@@ -358,14 +358,14 @@ export function DecisionView({ result }: { result: ApplicationResult }) {
 
           {result.emails.length > 0 && (
             <section className="rounded-lg border border-stone-200 bg-white p-6" aria-labelledby="emails-heading">
-              <h2 id="emails-heading" className="text-lg font-semibold text-navy">Emails sent to you</h2>
+              <h2 id="emails-heading" className="text-lg font-semibold text-navy">Your messages</h2>
               <ul className="mt-3 divide-y divide-stone-100">
                 {result.emails.map((e) => (
                   <li key={e.id} className="flex items-start justify-between gap-3 py-3">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-stone-900">{e.subject}</p>
                       <p className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-stone-500">
-                        {e.to_masked} <EmailStatusBadge status={e.status} />
+                        {e.to_masked} <EmailStatusBadge status={e.status} hideUnsent />
                       </p>
                     </div>
                     <Button
@@ -414,7 +414,7 @@ export function DecisionView({ result }: { result: ApplicationResult }) {
       </div>
 
       <Disclaimer />
-      <EmailPreview email={preview} onClose={() => setPreview(null)} />
+      <EmailPreview email={preview} onClose={() => setPreview(null)} internal={false} />
     </div>
   );
 }
