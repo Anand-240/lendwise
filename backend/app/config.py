@@ -24,18 +24,6 @@ class Settings(BaseSettings):
     rate_limit_global_per_minute: int = 120  # backstop across all clients (IP headers can be spoofed)
     screen_rate_limit_per_minute: int = 60  # instant screenings per client IP (nothing is stored)
 
-    # Public site URL used for links inside emails.
-    public_site_url: str = "http://localhost:3000"
-
-    # Email: without RESEND_API_KEY, emails are captured in the outbox (demo) instead of delivered.
-    resend_api_key: str = ""
-    email_from: str = "LendWise <no-reply@lendwise.demo>"
-    email_reply_to: str = ""
-
-    @property
-    def email_mode(self) -> str:
-        return "live" if self.resend_api_key else "demo"
-
     @field_validator("log_level")
     @classmethod
     def _upper(cls, v: str) -> str:

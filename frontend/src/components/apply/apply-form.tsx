@@ -129,7 +129,7 @@ export function ApplyForm({ purposes, initial }: { purposes: string[]; initial: 
         <legend className="sr-only">Your details</legend>
         <div>
           <h2 className="text-lg font-semibold text-navy">2. Your details</h2>
-          <p className="mt-1 text-sm text-stone-600">Used to send you the decision and let you track the application.</p>
+          <p className="mt-1 text-sm text-stone-600">Used to find your application again when you track it.</p>
         </div>
         <Field name="full_name" label="Full name" error={errors.full_name}>
           <Input
@@ -186,7 +186,7 @@ export function ApplyForm({ purposes, initial }: { purposes: string[]; initial: 
           {submitting ? <Loader2 className="animate-spin" aria-hidden /> : <Send aria-hidden />} Submit application
         </Button>
         <p className="text-xs text-stone-500">
-          You will see the screening result straight away. A loan officer then makes the final decision and emails you.
+          You will see the screening result straight away. A loan officer then makes the final decision, which you can see on your application page.
         </p>
       </fieldset>
     </form>

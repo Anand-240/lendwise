@@ -153,35 +153,10 @@ export type Health = {
   mode: "live" | "unavailable";
   model_version: string;
   database: "ok" | "unavailable";
-  email_mode: "live" | "demo";
 };
 
-export type EmailSummary = {
-  id: number;
-  kind: string;
-  subject: string;
-  to_masked: string;
-  created_at: string;
-  status: "demo" | "queued" | "sent" | "failed";
-  html: string;
-};
 
-export type AdminEmail = {
-  id: number;
-  created_at: string;
-  kind: string;
-  to_email: string;
-  subject: string;
-  html: string;
-  text: string;
-  application_id: string | null;
-  message_id: number | null;
-  status: "demo" | "queued" | "sent" | "failed";
-  provider: string;
-  error: string | null;
-};
 
-export type AdminEmailPage = { items: AdminEmail[]; total: number; mode: "live" | "demo" };
 
 export type ThreadMessage = { author: "officer" | "applicant"; body: string; created_at: string };
 
@@ -203,7 +178,6 @@ export type ApplicationResult = {
   applicant: ApplicantSummary;
   timestamp: string;
   decided_at: string | null;
-  emails: EmailSummary[];
   messages: ThreadMessage[];
 };
 
@@ -285,7 +259,6 @@ export type ContactMessage = {
   application_id: string | null;
   message: string;
   resolved: boolean;
-  replies: { created_at: string; body: string; status: string }[];
 };
 
 export type ContactPage = { items: ContactMessage[]; total: number; unresolved: number };

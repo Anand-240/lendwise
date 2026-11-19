@@ -26,7 +26,6 @@ from pathlib import Path
 
 os.environ["OMP_NUM_THREADS"] = "1"  # same as the API (see app/main.py)
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
-os.environ["RESEND_API_KEY"] = ""
 os.environ.setdefault("JWT_SECRET", "acceptance-suite-secret-at-least-32-bytes")
 os.environ["ADMIN_EMAIL"] = "officer@example.com"
 os.environ["ADMIN_PASSWORD"] = "Acceptance-Suite-1"
@@ -46,7 +45,7 @@ from sklearn.metrics import accuracy_score, brier_score_loss, precision_score, r
 from app.ml import constants as C  # noqa: E402
 from app.ml.behaviour import ELIGIBILITY_JUMP, REFERENCE_PROFILES, RISK_JUMP, direction_ok, jumpy_share  # noqa: E402
 from app.ml.engine import eligibility_tier, risk_tier  # noqa: E402
-from app.ml.registry import ELIGIBILITY_FILE, Screener  # noqa: E402
+from app.ml.registry import Screener  # noqa: E402
 from app.ml.validator import InputError, validate  # noqa: E402
 
 ARTIFACTS = ROOT / "app" / "ml" / "artifacts"

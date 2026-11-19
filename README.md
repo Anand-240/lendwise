@@ -125,14 +125,13 @@ Memory: at least 8 GB RAM. The rejected file has about 27.6 million rows and is 
 | GET | `/admin/applications` | JWT | search, filters (decision, recommendation, tiers, flag, dates), sort, pages |
 | GET / PATCH / DELETE | `/admin/applications/{id}` | JWT | detail; approve, approve counter-offer, reject or request info; delete |
 | GET | `/admin/stats`, `/admin/applications/export.csv` | JWT | dashboard numbers, CSV export |
-| GET / PATCH / POST | `/admin/messages...`, `/admin/emails` | JWT | inbox, replies and email outbox |
+| GET / PATCH | `/admin/messages`, `/admin/messages/{id}` | JWT | contact-form inbox; mark resolved or reopen |
 
 ## Deployment (free tiers)
 
-- **Backend on Render (Free)**: root directory `backend/`, Docker deploy. Set `JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `CORS_ORIGINS=https://<your-vercel-domain>`, `PUBLIC_SITE_URL` and `DATABASE_URL`. The models are in the image, so no download step is needed, and the API fits a 512 MB instance. The free instance sleeps after 15 minutes idle.
+- **Backend on Render (Free)**: root directory `backend/`, Docker deploy. Set `JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `CORS_ORIGINS=https://<your-vercel-domain>` and `DATABASE_URL`. The models are in the image, so no download step is needed, and the API fits a 512 MB instance. The free instance sleeps after 15 minutes idle.
 - **Database on Supabase (Free)**: use the Session pooler URI as `DATABASE_URL`. Tables are created on first start with an `lw_` prefix, so tables from the earlier version are left untouched. Free projects pause after about a week without activity.
 - **Frontend on Vercel (Hobby)**: root directory `frontend/`, with `BACKEND_API_URL=https://<your-render-service>` and `NEXT_PUBLIC_SITE_URL=https://<your-domain>`.
-- **Email (optional)**: set `RESEND_API_KEY` and `EMAIL_FROM`. Without it, every email is kept in the officer outbox instead of being sent.
 
 ## Limitations
 

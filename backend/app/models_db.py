@@ -1,7 +1,7 @@
 """Database tables.
 
 Tables use an `lw_` prefix. The earlier Random Forest version stored applicants under different
-names (`applications`, `outbound_emails` and so on); those tables are left untouched, and the new
+names (`applications` and so on); those tables are left untouched, and the new
 ones are created next to them on first start.
 """
 from datetime import datetime, timezone
@@ -99,23 +99,3 @@ class ContactMessage(Base):
     application_id: Mapped[str | None] = mapped_column(String(32), nullable=True)
     message: Mapped[str] = mapped_column(Text)
     resolved: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
-
-
-class OutboundEmail(Base):
-    """Every email the platform sends. In demo mode rows are kept as a viewable outbox."""
-
-    __tablename__ = "lw_outbound_emails"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utcnow, index=True)
-    kind: Mapped[str] = mapped_column(String(32), index=True)
-    to_email: Mapped[str] = mapped_column(String(254))
-    subject: Mapped[str] = mapped_column(String(200))
-    html: Mapped[str] = mapped_column(Text)
-    text: Mapped[str] = mapped_column(Text)
-    application_id: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True)
-    message_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
-    status: Mapped[str] = mapped_column(String(12), default="queued")  # queued | sent | failed | demo
-    provider: Mapped[str] = mapped_column(String(12))  # resend | demo
-    provider_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
-    error: Mapped[str | None] = mapped_column(String(300), nullable=True)

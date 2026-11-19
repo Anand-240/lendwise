@@ -11,7 +11,6 @@ os.environ.setdefault("ADMIN_PASSWORD", "Sup3r-Secret!")
 os.environ.setdefault("RATE_LIMIT_PER_MINUTE", "1000")
 os.environ.setdefault("RATE_LIMIT_GLOBAL_PER_MINUTE", "5000")
 os.environ.setdefault("SCREEN_RATE_LIMIT_PER_MINUTE", "5000")
-os.environ["RESEND_API_KEY"] = ""
 
 ARTIFACTS = BACKEND / "app" / "ml" / "artifacts"
 HAS_MODELS = all((ARTIFACTS / f).exists() for f in ("eligibility.joblib", "chargeoff.joblib", "range_guard.joblib", "metadata.json"))

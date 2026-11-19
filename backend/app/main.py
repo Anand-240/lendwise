@@ -37,8 +37,7 @@ logging.getLogger("uvicorn.access").disabled = True
 async def lifespan(app: FastAPI):
     database_ok = ensure_db(force=True)  # never raises: screening works without the database
     get_screener().load()
-    log.info("LendWise API ready (models=%s, database=%s, email=%s)", get_screener().mode,
-             "ok" if database_ok else "unavailable", settings.email_mode)
+    log.info("LendWise API ready (models=%s, database=%s)", get_screener().mode, "ok" if database_ok else "unavailable")
     yield
 
 

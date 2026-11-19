@@ -103,16 +103,6 @@ class ApplicantSummary(BaseModel):
     dti: float
 
 
-class EmailSummary(BaseModel):
-    id: int
-    kind: str
-    subject: str
-    to_masked: str
-    created_at: datetime
-    status: str
-    html: str
-
-
 class ThreadMessage(BaseModel):
     author: Literal["officer", "applicant"]
     body: str
@@ -130,7 +120,6 @@ class ApplicationResult(BaseModel):
     applicant: ApplicantSummary
     timestamp: datetime
     decided_at: datetime | None = None
-    emails: list[EmailSummary] = []
     messages: list[ThreadMessage] = []
 
 
@@ -144,7 +133,6 @@ class HealthOut(BaseModel):
     mode: Literal["live", "unavailable"]
     model_version: str
     database: Literal["ok", "unavailable"]
-    email_mode: Literal["live", "demo"]
 
 
 # ---- Officer --------------------------------------------------------------------------------------
@@ -200,7 +188,7 @@ class AdminPage(BaseModel):
 
 
 class AdminUpdate(BaseModel):
-    """Officer action. `note` is internal; `message` is shown and emailed to the applicant."""
+    """Officer action. `note` is internal; `message` is shown to the applicant on their status page."""
 
     action: Literal["approve", "approve_counter_offer", "reject", "request_info"]
     note: str | None = Field(default=None, max_length=2000)
@@ -262,12 +250,6 @@ class ContactCreated(BaseModel):
     reference: str
 
 
-class ReplyOut(BaseModel):
-    created_at: datetime
-    body: str
-    status: str
-
-
 class ContactOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -280,7 +262,6 @@ class ContactOut(BaseModel):
     application_id: str | None
     message: str
     resolved: bool
-    replies: list[ReplyOut] = []
 
 
 class ContactPage(BaseModel):
@@ -291,39 +272,3 @@ class ContactPage(BaseModel):
 
 class MessageUpdate(BaseModel):
     resolved: bool
-
-
-class ReplyIn(BaseModel):
-    body: str = Field(min_length=5, max_length=5000)
-    resolve: bool = True
-
-    @field_validator("body")
-    @classmethod
-    def _strip_body(cls, v: str) -> str:
-        v = v.strip()
-        if len(v) < 5:
-            raise ValueError("a reply of at least 5 characters is required")
-        return v
-
-
-class AdminEmail(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    created_at: datetime
-    kind: str
-    to_email: str
-    subject: str
-    html: str
-    text: str
-    application_id: str | None
-    message_id: int | None
-    status: str
-    provider: str
-    error: str | None
-
-
-class AdminEmailPage(BaseModel):
-    items: list[AdminEmail]
-    total: int
-    mode: Literal["live", "demo"]

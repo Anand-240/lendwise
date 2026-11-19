@@ -16,9 +16,7 @@ import {
   Inbox,
   Loader2,
   LogOut,
-  Mail,
   MessageSquareText,
-  Reply,
   Send,
   Trash2,
   RefreshCw,
@@ -35,10 +33,9 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Logo } from "@/components/site/logo";
 import { DecisionDonut, ProbabilityHistogram, TierBars, VolumeChart } from "./charts";
 import { formatDate, formatPct, formatPercent, formatUSD } from "@/lib/format";
-import type { AdminApplication, AdminEmail, AdminEmailPage, AdminPage, AdminStats, ContactPage, FinalDecision } from "@/lib/types";
+import type { AdminApplication, AdminPage, AdminStats, ContactPage, FinalDecision } from "@/lib/types";
 import { ThreadList } from "@/components/decision/thread";
 import { DECISION_COPY, RecommendationBadge, TierBadge } from "@/components/screen/screen-result";
-import { EmailPreview, EmailStatusBadge, type PreviewEmail } from "@/components/site/email-preview";
 import { cn } from "@/lib/utils";
 
 type SortKey = "created_at" | "default_probability" | "eligibility_score" | "loan_amount" | "fico" | "full_name";
@@ -230,9 +227,6 @@ export function AdminDashboard() {
             </Button>
             <a href="#messages" className="hidden h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-medium text-stone-700 hover:bg-stone-100 sm:inline-flex">
               <Inbox className="size-4" aria-hidden /> Messages
-            </a>
-            <a href="#outbox" className="hidden h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-medium text-stone-700 hover:bg-stone-100 sm:inline-flex">
-              <Mail className="size-4" aria-hidden /> Outbox
             </a>
             <Button variant="outline" size="sm" onClick={logout}>
               <LogOut aria-hidden /> Sign out
@@ -468,8 +462,7 @@ export function AdminDashboard() {
           )}
         </section>
 
-        <MessagesInbox reloadKey={reloadKey} onOpenApplication={openApplication} onChanged={reload} />
-        <EmailOutbox reloadKey={reloadKey} />
+        <MessagesInbox reloadKey={reloadKey} onOpenApplication={openApplication} />
       </div>
 
       <ApplicationDrawer
@@ -519,43 +512,15 @@ function SortHeader({
 function MessagesInbox({
   reloadKey,
   onOpenApplication,
-  onChanged,
 }: {
   reloadKey: number;
   onOpenApplication: (id: string) => void;
-  onChanged: () => void;
 }) {
   const authed = useAuthedFetch();
   const [data, setData] = useState<ContactPage | null>(null);
   const [showResolved, setShowResolved] = useState(false);
   const [localKey, setLocalKey] = useState(0);
   const [busy, setBusy] = useState<number | null>(null);
-  const [replyTo, setReplyTo] = useState<number | null>(null);
-  const [replyText, setReplyText] = useState("");
-  const [resolveOnReply, setResolveOnReply] = useState(true);
-
-  async function sendReply(id: number) {
-    setBusy(id);
-    try {
-      const res = await authed(`/api/admin/messages/${id}/reply`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ body: replyText.trim(), resolve: resolveOnReply }),
-      });
-      const body = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(body?.error?.message ?? "Could not send the reply.");
-      toast.success(body.status === "demo" ? "Reply saved in the outbox (email delivery is off)" : "Reply sent");
-      setReplyText("");
-      setReplyTo(null);
-      setLocalKey((k) => k + 1);
-      onChanged();
-    } catch (e) {
-      if ((e as Error).message !== "unauthorized") toast.error((e as Error).message);
-    } finally {
-      setBusy(null);
-    }
-  }
-
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -633,157 +598,16 @@ function MessagesInbox({
                   </p>
                 </div>
                 <div className="flex shrink-0 gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setReplyTo(replyTo === m.id ? null : m.id)} aria-expanded={replyTo === m.id}>
-                    <Reply aria-hidden /> Reply
-                  </Button>
                   <Button variant="outline" size="sm" onClick={() => toggle(m.id, !m.resolved)} disabled={busy === m.id}>
                     {busy === m.id ? <Loader2 className="animate-spin" aria-hidden /> : <CheckCircle2 aria-hidden />}
                     {m.resolved ? "Reopen" : "Mark resolved"}
                   </Button>
                 </div>
               </div>
-              {m.replies.length > 0 && (
-                <ul className="mt-3 space-y-2 border-l-2 border-brand-line pl-4">
-                  {m.replies.map((r, i) => (
-                    <li key={i} className="text-sm">
-                      <p className="flex flex-wrap items-center gap-2 text-xs text-stone-500">
-                        Reply sent {formatDate(r.created_at, true)} <EmailStatusBadge status={r.status} />
-                      </p>
-                      <p className="mt-1 whitespace-pre-wrap break-words text-stone-700">{r.body}</p>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {replyTo === m.id && (
-                <div className="mt-4 rounded-md border border-stone-200 bg-stone-50 p-4">
-                  <label htmlFor={`reply-${m.id}`} className="text-xs font-medium text-stone-700">
-                    Reply to {m.email}
-                  </label>
-                  <Textarea
-                    id={`reply-${m.id}`}
-                    rows={4}
-                    maxLength={5000}
-                    value={replyText}
-                    onChange={(e) => setReplyText(e.target.value)}
-                    placeholder="Write your reply"
-                    className="mt-1 bg-white"
-                  />
-                  <div className="mt-3 flex flex-wrap items-center gap-3">
-                    <Button onClick={() => sendReply(m.id)} disabled={replyText.trim().length < 5 || busy === m.id}>
-                      {busy === m.id ? <Loader2 className="animate-spin" aria-hidden /> : <Send aria-hidden />} Send reply
-                    </Button>
-                    <label className="flex items-center gap-2 text-sm text-stone-600">
-                      <input type="checkbox" checked={resolveOnReply} onChange={(e) => setResolveOnReply(e.target.checked)} className="size-4 accent-[#8A6417]" />
-                      Mark resolved after sending
-                    </label>
-                  </div>
-                </div>
-              )}
             </li>
           ))}
         </ul>
       )}
-    </section>
-  );
-}
-
-const EMAIL_KIND: Record<string, string> = {
-  application_received: "Application received",
-  decision: "Decision",
-  decision_update: "Decision update",
-  info_requested: "Information requested",
-  contact_ack: "Contact acknowledgement",
-  contact_reply: "Contact reply",
-};
-
-const toPreview = (e: AdminEmail): PreviewEmail => ({
-  subject: e.subject,
-  to: e.to_email,
-  created_at: e.created_at,
-  status: e.status,
-  html: e.html,
-  error: e.error,
-});
-
-function useEmails(query: string, reloadKey: number, enabled = true) {
-  const authed = useAuthedFetch();
-  const [data, setData] = useState<AdminEmailPage | null>(null);
-  useEffect(() => {
-    if (!enabled) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await authed(`/api/admin/emails${query ? `?${query}` : ""}`);
-        const body = await res.json().catch(() => null);
-        if (!cancelled && res.ok) setData(body);
-      } catch {
-        /* shown as empty */
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [authed, query, reloadKey, enabled]);
-  return data;
-}
-
-function EmailOutbox({ reloadKey }: { reloadKey: number }) {
-  const data = useEmails("limit=25", reloadKey);
-  const [preview, setPreview] = useState<PreviewEmail | null>(null);
-  return (
-    <section id="outbox" aria-labelledby="outbox-heading" className="scroll-mt-20 rounded-lg border border-stone-200 bg-white">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-stone-100 p-5">
-        <h2 id="outbox-heading" className="flex items-center gap-2 text-base font-semibold text-navy">
-          <Mail className="size-4.5 text-brand" aria-hidden /> Email outbox
-          {data && <span className="font-normal text-stone-500">({data.total})</span>}
-        </h2>
-        {data && (
-          <p className={cn("text-xs", data.mode === "demo" ? "text-amber-900" : "text-emerald-800")}>
-            {data.mode === "demo"
-              ? "Email delivery is off: emails are saved here, not sent. Add RESEND_API_KEY to send them."
-              : "Live: emails are delivered through Resend."}
-          </p>
-        )}
-      </div>
-      {!data ? (
-        <div className="p-5">
-          <Skeleton className="h-24 w-full" />
-        </div>
-      ) : data.items.length === 0 ? (
-        <p className="px-5 py-10 text-center text-sm text-stone-500">No emails yet.</p>
-      ) : (
-        <div className="relative overflow-x-auto">
-          <table className="w-full min-w-[44rem] text-left text-sm">
-            <thead className="bg-stone-50 text-xs text-stone-500">
-              <tr>
-                <th scope="col" className="px-4 py-3 font-medium">Sent</th>
-                <th scope="col" className="px-4 py-3 font-medium">To</th>
-                <th scope="col" className="px-4 py-3 font-medium">Subject</th>
-                <th scope="col" className="px-4 py-3 font-medium">Type</th>
-                <th scope="col" className="px-4 py-3 font-medium">Status</th>
-                <th scope="col" className="px-4 py-3"><span className="sr-only">Preview</span></th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.items.map((e) => (
-                <tr key={e.id} className="border-t border-stone-100">
-                  <td className="whitespace-nowrap px-4 py-3 text-stone-600">{formatDate(e.created_at, true)}</td>
-                  <td className="px-4 py-3 text-stone-800">{e.to_email}</td>
-                  <td className="max-w-[18rem] truncate px-4 py-3 text-stone-900">{e.subject}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-stone-600">{EMAIL_KIND[e.kind] ?? e.kind}</td>
-                  <td className="px-4 py-3"><EmailStatusBadge status={e.status} /></td>
-                  <td className="px-4 py-3 text-right">
-                    <Button variant="outline" size="sm" onClick={() => setPreview(toPreview(e))} aria-label={`Preview email: ${e.subject}`}>
-                      View
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-      <EmailPreview email={preview} onClose={() => setPreview(null)} />
     </section>
   );
 }
@@ -800,8 +624,6 @@ function ApplicationDrawer({
   onDeleted: () => void;
 }) {
   const authed = useAuthedFetch();
-  const emails = useEmails(a ? `application_id=${a.application_id}` : "", a?.updated_at ? Date.parse(a.updated_at) : 0, !!a);
-  const [preview, setPreview] = useState<PreviewEmail | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -837,9 +659,9 @@ function ApplicationDrawer({
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error?.details?.[0]?.message ?? data?.error?.message ?? "Update failed");
       toast.success(
-        action === "approve" || action === "approve_counter_offer" ? "Application approved. The applicant has been emailed."
-          : action === "reject" ? "Application rejected. The applicant has been emailed."
-          : "Request sent. The applicant has been emailed.",
+        action === "approve" || action === "approve_counter_offer" ? "Application approved. The applicant can see it on their status page."
+          : action === "reject" ? "Application rejected. The applicant can see it on their status page."
+          : "Request sent. The applicant will see it on their status page.",
       );
       setNote("");
       setMessage("");
@@ -940,7 +762,7 @@ function ApplicationDrawer({
                 {asking && (
                   <div className="mt-3">
                     <label htmlFor="officer-message" className="block text-xs font-medium text-stone-700">
-                      Message to the applicant (sent by email and shown on their status page)
+                      Message to the applicant (shown on their status page)
                     </label>
                     <Textarea
                       id="officer-message"
@@ -1031,30 +853,6 @@ function ApplicationDrawer({
               )}
 
 
-              <section>
-                <h3 className="text-sm font-semibold text-navy">Emails to applicant</h3>
-                {!emails ? (
-                  <Skeleton className="mt-2 h-12 w-full" />
-                ) : emails.items.length === 0 ? (
-                  <p className="mt-2 text-sm text-stone-500">No emails.</p>
-                ) : (
-                  <ul className="mt-2 divide-y divide-stone-100 text-sm">
-                    {emails.items.map((e) => (
-                      <li key={e.id} className="flex items-center justify-between gap-3 py-2">
-                        <span className="min-w-0">
-                          <span className="block truncate text-stone-900">{e.subject}</span>
-                          <span className="text-xs text-stone-500">{formatDate(e.created_at, true)}</span>
-                        </span>
-                        <span className="flex shrink-0 items-center gap-2">
-                          <EmailStatusBadge status={e.status} />
-                          <Button variant="ghost" size="sm" onClick={() => setPreview(toPreview(e))}>View</Button>
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
-
               <section className="rounded-md border border-rose-200 p-4">
                 <h3 className="text-sm font-semibold text-rose-800">Delete application</h3>
                 <p className="mt-1 text-xs text-stone-600">
@@ -1080,7 +878,6 @@ function ApplicationDrawer({
           </>
         )}
       </SheetContent>
-      <EmailPreview email={preview} onClose={() => setPreview(null)} />
     </Sheet>
   );
 }

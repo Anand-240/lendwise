@@ -1,6 +1,6 @@
 import hmac
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -33,12 +33,12 @@ NOT_FOUND = "No application matches those details."
 
 
 @router.post("", response_model=ApplicationCreated, status_code=status.HTTP_201_CREATED)
-def create_application(body: ApplicationCreate, request: Request, background: BackgroundTasks, db: Session = Depends(get_db)):
+def create_application(body: ApplicationCreate, request: Request, db: Session = Depends(get_db)):
     _throttle(global_submit_limiter, request, key="*")
     _throttle(submit_limiter, request)
     if not get_screener().ready:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "The screening models are not available right now.")
-    row = submit_application(db, body, background)
+    row = submit_application(db, body)
     return ApplicationCreated(**to_result(row, db).model_dump(), access_token=row.access_token)
 
 

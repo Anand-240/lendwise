@@ -1,23 +1,14 @@
 "use client";
 
-import { useState } from "react";
 import { Check, CheckCircle2, Clock3, MessageSquareText, Printer, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/site/button-link";
 import { Disclaimer } from "@/components/site/disclaimer";
-import { EmailPreview, EmailStatusBadge, type PreviewEmail } from "@/components/site/email-preview";
 import { ScreeningResult } from "@/components/screen/screen-result";
 import { formatDate, formatUSD } from "@/lib/format";
 import type { ApplicationResult } from "@/lib/types";
 import { ReplyForm, ThreadList } from "./thread";
 import { cn } from "@/lib/utils";
-
-const EMAIL_KIND: Record<string, string> = {
-  application_received: "Application received",
-  decision: "Decision",
-  decision_update: "Decision update",
-  info_requested: "Information requested",
-};
 
 function header(result: ApplicationResult) {
   const first = result.applicant.full_name.split(" ")[0];
@@ -52,12 +43,11 @@ function header(result: ApplicationResult) {
     title: info ? `${first}, the loan officer needs a little more information` : `Thanks, ${first}. Your application is with a loan officer`,
     text: info
       ? "Please answer the question below. Your application continues as soon as you reply."
-      : "LendWise has screened your application. A loan officer now reviews the result and makes the final decision. We will email you, and you can check this page any time.",
+      : "LendWise has screened your application. A loan officer now reviews the result and makes the final decision. Check this page, or the Track application page with your ID and email, to see the decision.",
   };
 }
 
 export function DecisionView({ result, lookupEmail, onRefresh }: { result: ApplicationResult; lookupEmail?: string; onRefresh?: () => void }) {
-  const [preview, setPreview] = useState<PreviewEmail | null>(null);
   const h = header(result);
   const pending = result.decision === "PENDING";
   const needsInfo = result.status === "Info Requested";
@@ -159,31 +149,6 @@ export function DecisionView({ result, lookupEmail, onRefresh }: { result: Appli
             </dl>
           </section>
 
-          {result.emails.length > 0 && (
-            <section className="rounded-lg border border-stone-200 bg-white p-5">
-              <h2 className="text-sm font-semibold text-navy">Emails we sent you</h2>
-              <ul className="mt-2 divide-y divide-stone-100 text-sm">
-                {result.emails.map((e) => (
-                  <li key={e.id} className="flex items-center justify-between gap-3 py-2">
-                    <span className="min-w-0">
-                      <span className="block truncate text-stone-900">{EMAIL_KIND[e.kind] ?? e.subject}</span>
-                      <span className="flex items-center gap-2 text-xs text-stone-500">
-                        {formatDate(e.created_at, true)} <EmailStatusBadge status={e.status} />
-                      </span>
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setPreview({ subject: e.subject, to: e.to_masked, created_at: e.created_at, status: e.status, html: e.html })}
-                    >
-                      View
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
           <div className="no-print flex flex-wrap gap-2">
             <Button variant="outline" onClick={() => window.print()}>
               <Printer aria-hidden /> Print
@@ -196,7 +161,6 @@ export function DecisionView({ result, lookupEmail, onRefresh }: { result: Appli
       </div>
 
       <Disclaimer />
-      <EmailPreview email={preview} onClose={() => setPreview(null)} internal={false} />
     </div>
   );
 }

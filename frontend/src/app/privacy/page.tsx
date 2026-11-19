@@ -24,7 +24,7 @@ export default function PrivacyPage() {
         <ul>
           <li>To screen your application with the eligibility and charge-off models.</li>
           <li>To let an authorised loan officer review the result and make the final decision.</li>
-          <li>To email you about your application and let you check its status.</li>
+          <li>To let you check the status of your application with its ID and your email address.</li>
         </ul>
         <h2>Automated decision-making</h2>
         <p>

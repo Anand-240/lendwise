@@ -22,7 +22,7 @@ def test_health(client):
     r = client.get("/api/v1/health")
     assert r.status_code == 200 and r.headers["X-Request-ID"]
     body = r.json()
-    assert body["mode"] == "live" and body["model_loaded"] is True and body["email_mode"] == "demo"
+    assert body["mode"] == "live" and body["model_loaded"] is True
 
 
 def test_metadata_is_a_model_card(client):
@@ -194,9 +194,6 @@ def test_request_more_info_and_applicant_reply(client, officer):
     rep = client.post(f"/api/v1/applications/{aid}/reply", json={"message": "Uploaded my pay stubs, thanks.", "email": APPLICANT["email"]})
     assert rep.status_code == 200 and rep.json()["status"] == "Pending Review"
     assert [m["author"] for m in rep.json()["messages"]] == ["officer", "applicant"]
-
-    kinds = [e["kind"] for e in client.get("/api/v1/admin/emails", params={"application_id": aid}, headers=officer).json()["items"]]
-    assert kinds.count("info_requested") == 1 and "decision" not in kinds
 
 
 def test_models_unavailable_returns_503(client):

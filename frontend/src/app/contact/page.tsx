@@ -29,7 +29,7 @@ export default function ContactPage() {
           </dl>
           <p className="mt-6 border-l-4 border-l-brand bg-stone-50 p-4 text-sm text-stone-600">
             Messages go straight to the LendWise officer inbox. For data-deletion requests, choose the topic “Privacy”, include your application
-            ID and write from the email you applied with.
+            ID and the email you applied with.
           </p>
         </div>
         <ContactForm />

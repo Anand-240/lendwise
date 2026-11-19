@@ -45,7 +45,7 @@ export function ContactForm() {
         return;
       }
       toast.success("Message sent", {
-        description: `Reference: ${body.reference}. We’ve emailed a confirmation to ${values.email}.`,
+        description: `Reference: ${body.reference}. The team will see it in the officer inbox.`,
       });
       reset({ name: "", email: "", topic: "Application", application_id: "", message: "" });
     } catch {

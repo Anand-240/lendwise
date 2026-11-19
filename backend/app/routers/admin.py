@@ -6,7 +6,7 @@ from datetime import date, datetime, time, timedelta, timezone
 from typing import Literal
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import StreamingResponse
 from sqlalchemy import Select, func, or_, select
@@ -14,13 +14,11 @@ from sqlalchemy.orm import Session
 
 from app.auth import create_token, require_officer, verify_credentials
 from app.config import get_settings
-from app import email_templates as tpl
 from app.db import get_db
-from app.emailer import queue_email
 from app.middleware import RateLimiter, client_key
-from app.services import add_message, send_decision_email, thread
-from app.models_db import Application, ContactMessage, OutboundEmail, utcnow
-from app.schemas import AdminApplication, AdminPage, AdminUpdate, AdminEmail, AdminEmailPage, ContactOut, ContactPage, LoginIn, LoginOut, MessageUpdate, ReplyIn, ReplyOut
+from app.services import add_message, thread
+from app.models_db import Application, ContactMessage, utcnow
+from app.schemas import AdminApplication, AdminPage, AdminUpdate, ContactOut, ContactPage, LoginIn, LoginOut, MessageUpdate
 
 router = APIRouter(prefix="/admin", tags=["officer"])
 login_limiter = RateLimiter(10)
@@ -172,7 +170,6 @@ def get_application(application_id: str, _: str = Depends(require_officer), db: 
 def update_application(
     application_id: str,
     body: AdminUpdate,
-    background: BackgroundTasks,
     officer: str = Depends(require_officer),
     db: Session = Depends(get_db),
 ):
@@ -190,7 +187,6 @@ def update_application(
         row.reviewed_at = utcnow()
         db.commit()
         db.refresh(row)
-        queue_email(db, row.email, tpl.info_requested(row, body.message), "info_requested", background, row.application_id)
         return _detail(db, row)
 
     if body.action == "approve_counter_offer" and row.counter_offer is None:
@@ -207,8 +203,6 @@ def update_application(
         raise RequestValidationError(
             [{"loc": ("body", "note"), "msg": "Add a note (at least 5 characters) explaining why you are going against the recommendation.", "type": "value_error"}]
         )
-    already_decided = row.final_decision in ("APPROVED", "REJECTED")
-    changed = row.final_decision != new_decision or row.approved_amount != amount
     row.final_decision = new_decision
     row.approved_amount = amount
     row.status = "Overridden" if against_model else "Decided"
@@ -221,9 +215,6 @@ def update_application(
     row.reviewed_at = utcnow()
     db.commit()
     db.refresh(row)
-    if changed:
-        # The applicant is told the outcome; the officer's internal note is never included.
-        send_decision_email(db, row, background, updated=already_decided)
     return _detail(db, row)
 
 
@@ -247,49 +238,8 @@ def list_messages(
     rows = db.scalars(stmt.order_by(ContactMessage.created_at.desc(), ContactMessage.id.desc()).limit(limit)).all()
     total = db.scalar(select(func.count()).select_from(ContactMessage)) or 0
     unresolved = db.scalar(select(func.count()).select_from(ContactMessage).where(ContactMessage.resolved.is_(False))) or 0
-    replies: dict[int, list[ReplyOut]] = {}
-    if rows:
-        for e in db.scalars(
-            select(OutboundEmail)
-            .where(OutboundEmail.kind == "contact_reply", OutboundEmail.message_id.in_([r.id for r in rows]))
-            .order_by(OutboundEmail.id)
-        ):
-            body = e.text.split("\n\n", 1)[1].rsplit("\n\nRegards,", 1)[0] if "\n\n" in e.text else e.text
-            replies.setdefault(e.message_id, []).append(ReplyOut(created_at=e.created_at, body=body, status=e.status))
-    items = [ContactOut.model_validate(r).model_copy(update={"replies": replies.get(r.id, [])}) for r in rows]
+    items = [ContactOut.model_validate(r) for r in rows]
     return ContactPage(items=items, total=total, unresolved=unresolved)
-
-
-@router.post("/messages/{message_id}/reply", response_model=AdminEmail, status_code=status.HTTP_201_CREATED)
-def reply_to_message(
-    message_id: int, body: ReplyIn, background: BackgroundTasks, _: str = Depends(require_officer), db: Session = Depends(get_db)
-):
-    msg = db.get(ContactMessage, message_id)
-    if msg is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Message not found")
-    email = queue_email(db, msg.email, tpl.contact_reply(msg, body.body), "contact_reply", background, msg.application_id, msg.id)
-    if body.resolve and not msg.resolved:
-        msg.resolved = True
-        db.commit()
-    return email
-
-
-@router.get("/emails", response_model=AdminEmailPage)
-def list_emails(
-    application_id: str | None = None,
-    message_id: int | None = None,
-    limit: int = Query(50, ge=1, le=200),
-    _: str = Depends(require_officer),
-    db: Session = Depends(get_db),
-) -> AdminEmailPage:
-    stmt = select(OutboundEmail)
-    if application_id:
-        stmt = stmt.where(OutboundEmail.application_id == application_id.upper())
-    if message_id:
-        stmt = stmt.where(OutboundEmail.message_id == message_id)
-    rows = db.scalars(stmt.order_by(OutboundEmail.id.desc()).limit(limit)).all()
-    total = db.scalar(select(func.count()).select_from(OutboundEmail)) or 0
-    return AdminEmailPage(items=[AdminEmail.model_validate(r) for r in rows], total=total, mode=get_settings().email_mode)
 
 
 @router.patch("/messages/{message_id}", response_model=ContactOut)

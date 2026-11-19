@@ -1,9 +1,7 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
-from app import email_templates as tpl
 from app.db import get_db
-from app.emailer import queue_email
 from app.middleware import RateLimiter, client_key
 from app.models_db import ContactMessage
 from app.schemas import ContactCreate, ContactCreated
@@ -15,7 +13,7 @@ global_contact_limiter = RateLimiter(60)
 
 @router.post("/contact", response_model=ContactCreated, status_code=status.HTTP_201_CREATED)
 def create_message(
-    body: ContactCreate, request: Request, background: BackgroundTasks, db: Session = Depends(get_db)
+    body: ContactCreate, request: Request, db: Session = Depends(get_db)
 ) -> ContactCreated:
     wait = global_contact_limiter.hit("*") or contact_limiter.hit(client_key(request))
     if wait is not None:
@@ -28,5 +26,4 @@ def create_message(
     db.flush()
     msg.reference = f"LW-MSG-{msg.id:06d}"
     db.commit()
-    queue_email(db, msg.email, tpl.contact_ack(msg), "contact_ack", background, msg.application_id, msg.id)
     return ContactCreated(reference=msg.reference)
