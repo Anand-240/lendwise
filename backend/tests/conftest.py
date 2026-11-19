@@ -4,36 +4,37 @@ from pathlib import Path
 import pytest
 
 BACKEND = Path(__file__).resolve().parents[1]
-os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
-os.environ.setdefault("JWT_SECRET", "test-secret")
+os.environ["DATABASE_URL"] = "sqlite:///:memory:"
+os.environ.setdefault("JWT_SECRET", "test-secret-that-is-long-enough-for-hs256")
 os.environ.setdefault("ADMIN_EMAIL", "officer@test.dev")
 os.environ.setdefault("ADMIN_PASSWORD", "Sup3r-Secret!")
 os.environ.setdefault("RATE_LIMIT_PER_MINUTE", "1000")
 os.environ.setdefault("RATE_LIMIT_GLOBAL_PER_MINUTE", "5000")
-# Tests exercise the OTP rules regardless of the local .env setting.
-os.environ["REQUIRE_PHONE_VERIFICATION"] = "true"
+os.environ.setdefault("SCREEN_RATE_LIMIT_PER_MINUTE", "5000")
+os.environ["RESEND_API_KEY"] = ""
 
 ARTIFACTS = BACKEND / "app" / "ml" / "artifacts"
-HAS_MODEL = (ARTIFACTS / "model.pkl").exists() and (ARTIFACTS / "scaler.pkl").exists()
-HAS_DATA = (BACKEND / "data" / "Training Data.csv").exists()
-
-needs_model = pytest.mark.skipif(not HAS_MODEL, reason="model.pkl / scaler.pkl not present")
-needs_data = pytest.mark.skipif(not HAS_DATA, reason="Training Data.csv not present")
+HAS_MODELS = all((ARTIFACTS / f).exists() for f in ("eligibility.joblib", "chargeoff.joblib", "range_guard.joblib", "metadata.json"))
+needs_models = pytest.mark.skipif(not HAS_MODELS, reason="trained artifacts not present (run scripts/train_models.py)")
 
 
 @pytest.fixture(scope="session")
-def predictor():
-    from app.ml.predictor import get_predictor
+def client():
+    from fastapi.testclient import TestClient
 
-    p = get_predictor()
-    p.load()
-    return p
+    from app.main import app
+
+    with TestClient(app) as c:
+        yield c
 
 
 @pytest.fixture(scope="session")
-def dataset():
-    import pandas as pd
+def token(client):
+    r = client.post("/api/v1/admin/login", json={"email": "officer@test.dev", "password": "Sup3r-Secret!"})
+    assert r.status_code == 200
+    return r.json()["access_token"]
 
-    df = pd.read_csv(BACKEND / "data" / "Training Data.csv")
-    df.columns = df.columns.str.strip()
-    return df
+
+@pytest.fixture(scope="session")
+def officer(token):
+    return {"Authorization": f"Bearer {token}"}

@@ -1,7 +1,6 @@
 import hmac
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query, Request, status
-from fastapi.exceptions import RequestValidationError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -9,8 +8,8 @@ from app.config import get_settings
 from app.db import get_db
 from app.middleware import RateLimiter, client_key
 from app.models_db import Application
+from app.ml.registry import get_screener
 from app.schemas import ApplicantReplyIn, ApplicationCreate, ApplicationCreated, ApplicationResult
-from app.otp import token_matches
 from app.services import add_message, submit_application, to_result
 
 router = APIRouter(prefix="/applications", tags=["public"])
@@ -37,10 +36,8 @@ NOT_FOUND = "No application matches those details."
 def create_application(body: ApplicationCreate, request: Request, background: BackgroundTasks, db: Session = Depends(get_db)):
     _throttle(global_submit_limiter, request, key="*")
     _throttle(submit_limiter, request)
-    if get_settings().require_phone_verification and not token_matches(body.phone_verification_token, body.phone):
-        raise RequestValidationError(
-            [{"loc": ("body", "phone_verification_token"), "msg": "Please verify your mobile number with the one-time code.", "type": "value_error"}]
-        )
+    if not get_screener().ready:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "The screening models are not available right now.")
     row = submit_application(db, body, background)
     return ApplicationCreated(**to_result(row, db).model_dump(), access_token=row.access_token)
 
@@ -92,7 +89,7 @@ def applicant_reply(
     if row is None or not (token_ok or email_ok):
         raise HTTPException(status_code=404, detail=NOT_FOUND)
     if row.status != "Info Requested":
-        raise HTTPException(status_code=409, detail="This application isn’t waiting for more information right now.")
+        raise HTTPException(status_code=409, detail="This application is not waiting for more information right now.")
     add_message(db, row.application_id, "applicant", body.message)
     row.status = "Pending Review"
     db.commit()

@@ -1,275 +1,236 @@
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
 import pytest
-from fastapi.testclient import TestClient
 
-from app.main import app
-from app.ml.predictor import get_predictor
-from app.otp import issue_token
-from tests.conftest import needs_model
+from tests.conftest import needs_models
 
-VALID = {
+APPLICANT = {
     "full_name": "Asha Verma",
     "email": "asha@example.com",
-    "phone": "9876543210",
-    "age": 35,
-    "marital_status": "single",
-    "profession": "Software_Developer",
-    "experience": 10,
-    "current_job_years": 5,
-    "income": 5_000_000,
-    "state": "Tamil_Nadu",
-    "city": "Tiruchirappalli[10]",
-    "house_ownership": "rented",
-    "current_house_years": 12,
-    "car_ownership": "no",
-    "loan_amount": 500_000,
-    "tenure_months": 60,
-    "purpose": "Personal",
+    "purpose": "Debt consolidation",
     "consent": True,
-    "phone_verification_token": issue_token("9876543210"),
+    "loan_amount": 15000,
+    "fico": 700,
+    "dti": 15,
 }
 
-
-@pytest.fixture(scope="module")
-def client():
-    with TestClient(app) as c:
-        yield c
-
-
-@pytest.fixture(scope="module")
-def token(client):
-    r = client.post("/api/v1/admin/login", json={"email": "officer@test.dev", "password": "Sup3r-Secret!"})
-    assert r.status_code == 200
-    return r.json()["access_token"]
+pytestmark = needs_models
 
 
 def test_health(client):
     r = client.get("/api/v1/health")
-    assert r.status_code == 200
-    assert r.headers["X-Request-ID"]
+    assert r.status_code == 200 and r.headers["X-Request-ID"]
     body = r.json()
-    assert body["mode"] in ("live", "demo")
+    assert body["mode"] == "live" and body["model_loaded"] is True and body["email_mode"] == "demo"
 
 
-def test_metadata(client):
-    r = client.get("/api/v1/metadata")
-    assert r.status_code == 200
-    md = r.json()
-    assert {"profession", "city", "state"} <= md["options"].keys()
-    assert "Tiruchirappalli[10]" in md["state_to_cities"]["Tamil_Nadu"]
-    assert md["metrics"]["accuracy"] > 0.88
+def test_metadata_is_a_model_card(client):
+    md = client.get("/api/v1/metadata").json()
+    assert md["features"] == ["loan_amount", "fico", "dti"]
+    assert md["constraints"] == {"eligibility": [-1, 1, -1], "chargeoff": [1, -1, 1]}
+    assert md["thresholds"]["reject_eligibility"] == 40 and md["thresholds"]["approve_eligibility"] == 75
+    assert 0.45 < md["severity"] < 0.55
+    assert md["metrics"]["eligibility"]["roc_auc"] > 0.85
+    assert 0.58 < md["metrics"]["chargeoff"]["roc_auc"] < 0.7
+    assert len(md["metrics"]["chargeoff"]["deciles"]) == 10
+    assert "Debt consolidation" in md["purposes"]
 
 
-@needs_model
-def test_submit_valid_returns_201_pending_review(client):
-    r = client.post("/api/v1/applications", json=VALID)
+def test_screen_tc01_outputs_within_range(client):  # TC-01
+    r = client.post("/api/v1/screen", json={"loan_amount": 15000, "fico": 700, "dti": 15})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert 0 <= body["eligibility"]["score"] <= 100
+    assert 0 <= body["charge_off"]["probability"] <= 100
+    assert body["decision"] in ("APPROVE", "REVIEW", "REJECT")
+    assert body["inputs"] == {"loan_amount": 15000, "fico": 700, "dti": 15}
+    assert body["model_version"].startswith("lendwise-")
+
+
+def test_screen_tc08_fico_cliff(client):  # TC-08
+    low = client.post("/api/v1/screen", json={"loan_amount": 15000, "fico": 659, "dti": 15}).json()
+    high = client.post("/api/v1/screen", json={"loan_amount": 15000, "fico": 660, "dti": 15}).json()
+    assert low["eligibility"]["score"] < 40 and low["eligibility"]["tier"] == "Unlikely"
+    assert low["decision"] == "REJECT" and low["charge_off"] is None  # risk hidden when Unlikely
+    assert high["eligibility"]["score"] > 75 and high["eligibility"]["tier"] == "Likely"
+
+
+@pytest.mark.parametrize(
+    "payload,field",
+    [
+        ({"loan_amount": 15000, "fico": 659.5, "dti": 15}, "fico"),       # TC-02
+        ({"loan_amount": 15000, "fico": 700, "dti": True}, "dti"),        # TC-04
+        ({"loan_amount": 45000, "fico": 700, "dti": 15}, "loan_amount"),  # TC-05
+        ({"loan_amount": "", "fico": 700, "dti": 15}, "loan_amount"),     # TC-06
+        ({"loan_amount": 15000, "fico": 700}, "dti"),                     # TC-07
+        ([15000, 700, 15], None),
+    ],
+)
+def test_screen_rejects_bad_input_with_one_message(client, payload, field):
+    r = client.post("/api/v1/screen", json=payload)
+    assert r.status_code == 422
+    err = r.json()["error"]
+    assert err["code"] == "VALIDATION_ERROR" and len(err["details"]) == 1
+    assert err["details"][0]["field"] == field and err["message"] == err["details"][0]["message"]
+
+
+def test_screen_accepts_percent_text(client):  # TC-03
+    r = client.post("/api/v1/screen", json={"loan_amount": "15,000", "fico": "700", "dti": "18%"})
+    assert r.status_code == 200 and r.json()["inputs"]["dti"] == 18
+
+
+def test_screen_counter_offer_is_smaller_and_approved(client):
+    body = client.post("/api/v1/screen", json={"loan_amount": 35000, "fico": 690, "dti": 25}).json()
+    assert body["decision"] in ("REVIEW", "REJECT")
+    offer = body["counter_offer"]
+    if offer is not None:
+        assert offer["loan_amount"] < 35000 and (35000 - offer["loan_amount"]) % 500 == 0
+        again = client.post("/api/v1/screen", json={**body["inputs"], "loan_amount": offer["loan_amount"]}).json()
+        assert again["decision"] == "APPROVE"
+
+
+def test_submit_application_and_status(client):
+    r = client.post("/api/v1/applications", json=APPLICANT)
     assert r.status_code == 201, r.text
     body = r.json()
-    assert body["application_id"].startswith("LW-")
-    # The model has scored it, but the applicant only sees that an officer is reviewing it.
-    assert body["decision"] == "PENDING" and body["status"] == "Pending Review"
-    for hidden in ("model_decision", "risk_class", "default_probability", "approval_score", "confidence", "risk_band", "estimated_emi"):
-        assert body[hidden] is None, hidden
-    assert body["indicative_factors"] == [] and body["engineered_features"] == {}
-    assert body["is_demo"] is False
-    assert body["access_token"]
-    assert body["applicant"]["phone_masked"] == "98******10"
+    aid = body["application_id"]
+    assert aid.startswith("LW-") and body["status"] == "Pending Review" and body["decision"] == "PENDING"
+    assert body["screening"]["decision"] in ("APPROVE", "REVIEW", "REJECT")
+    assert body["applicant"]["fico"] == 700 and body["access_token"]
 
-
-def test_out_of_range_generates_warning(client):
-    r = client.post("/api/v1/applications", json={**VALID, "current_house_years": 3})
-    assert r.status_code == 201
-    assert any("house years" in w.lower() for w in r.json()["warnings"])
+    ok = client.get(f"/api/v1/applications/{aid}/status", params={"email": "ASHA@example.com"})
+    assert ok.status_code == 200 and ok.json()["application_id"] == aid and "access_token" not in ok.json()
+    assert client.get(f"/api/v1/applications/{aid}/status", params={"email": "x@example.com"}).status_code == 404
+    assert client.get("/api/v1/applications/LW-2000-999999/status", params={"email": "asha@example.com"}).status_code == 404
+    assert client.get(f"/api/v1/applications/{aid}", headers={"X-Access-Token": body["access_token"]}).status_code == 200
+    assert client.get(f"/api/v1/applications/{aid}", headers={"X-Access-Token": "x" * 43}).status_code == 404
 
 
 @pytest.mark.parametrize(
     "patch,field",
     [
-        ({"age": 20}, "age"),
-        ({"phone": "5123456789"}, "phone"),
         ({"email": "not-an-email"}, "email"),
         ({"consent": False}, "consent"),
-        ({"loan_amount": 5_000}, "loan_amount"),
-        ({"tenure_months": 400}, "tenure_months"),
         ({"purpose": "Holiday"}, "purpose"),
-        ({"profession": "Wizard"}, "profession"),
-        ({"city": "Mumbai"}, "city"),
-        ({"experience": 20, "age": 30}, "experience"),
-        ({"current_job_years": 12}, "current_job_years"),
         ({"full_name": "A"}, "full_name"),
+        ({"fico": 900}, "fico"),
+        ({"dti": "-5"}, "dti"),
     ],
 )
-def test_invalid_input_returns_422(client, patch, field):
-    r = client.post("/api/v1/applications", json={**VALID, **patch})
+def test_invalid_application_returns_422(client, patch, field):
+    r = client.post("/api/v1/applications", json={**APPLICANT, **patch})
     assert r.status_code == 422, r.text
-    err = r.json()["error"]
-    assert err["code"] == "VALIDATION_ERROR"
-    assert field in [d["field"] for d in err["details"]]
-    assert err["request_id"]
-
-
-def test_status_check(client):
-    created = client.post("/api/v1/applications", json=VALID).json()
-    aid = created["application_id"]
-    ok = client.get(f"/api/v1/applications/{aid}/status", params={"email": "ASHA@example.com"})
-    assert ok.status_code == 200
-    assert ok.json()["application_id"] == aid
-    assert "access_token" not in ok.json()
-    bad = client.get(f"/api/v1/applications/{aid}/status", params={"email": "other@example.com"})
-    assert bad.status_code == 404
-    missing = client.get("/api/v1/applications/LW-2000-999999/status", params={"email": "asha@example.com"})
-    assert missing.status_code == 404
-    tok = client.get(f"/api/v1/applications/{aid}", headers={"X-Access-Token": created["access_token"]})
-    assert tok.status_code == 200
-    wrong = client.get(f"/api/v1/applications/{aid}", headers={"X-Access-Token": "x" * 43})
-    assert wrong.status_code == 404
+    assert field in [d["field"] for d in r.json()["error"]["details"]]
 
 
 def test_admin_requires_auth(client):
     assert client.get("/api/v1/admin/applications").status_code == 401
     assert client.get("/api/v1/admin/stats", headers={"Authorization": "Bearer nope"}).status_code == 401
-    bad = client.post("/api/v1/admin/login", json={"email": "officer@test.dev", "password": "wrong"})
-    assert bad.status_code == 401
+    assert client.post("/api/v1/admin/login", json={"email": "officer@test.dev", "password": "wrong"}).status_code == 401
 
 
-def test_officer_review_flow_stats_export(client, token):
-    h = {"Authorization": f"Bearer {token}"}
-    created = client.post("/api/v1/applications", json={**VALID, "full_name": "Ravi Kumar"}).json()
+def test_officer_review_flow_stats_export(client, officer):
+    # FICO 700, DTI 10, $5,000 is a clear APPROVE recommendation.
+    created = client.post("/api/v1/applications", json={**APPLICANT, "full_name": "Ravi Kumar", "loan_amount": 5000, "dti": 10}).json()
     aid = created["application_id"]
+    assert created["screening"]["decision"] == "APPROVE"
 
-    page = client.get("/api/v1/admin/applications", params={"q": "Ravi"}, headers=h).json()
+    page = client.get("/api/v1/admin/applications", params={"q": "Ravi"}, headers=officer).json()
     assert page["total"] >= 1 and page["items"][0]["full_name"] == "Ravi Kumar"
-    assert page["items"][0]["created_at"].endswith(("Z", "+00:00")), "timestamps must be timezone-aware"
-    from datetime import datetime
-    from zoneinfo import ZoneInfo
-
-    # Date filters use the business timezone (Asia/Kolkata by default), not UTC days.
     created_at = datetime.fromisoformat(page["items"][0]["created_at"].replace("Z", "+00:00"))
     today = created_at.astimezone(ZoneInfo("Asia/Kolkata")).date().isoformat()
-    dated = client.get("/api/v1/admin/applications", params={"date_from": today, "date_to": today}, headers=h).json()
-    assert dated["total"] >= 1
-    pending = client.get("/api/v1/admin/applications", params={"decision": "PENDING"}, headers=h).json()
-    assert any(i["application_id"] == aid for i in pending["items"])
+    assert client.get("/api/v1/admin/applications", params={"date_from": today, "date_to": today}, headers=officer).json()["total"] >= 1
+    rec = client.get("/api/v1/admin/applications", params={"recommendation": "APPROVE", "decision": "PENDING"}, headers=officer).json()
+    assert any(i["application_id"] == aid for i in rec["items"])
 
-    # Officers see the model recommendation even while the applicant doesn't.
-    detail = client.get(f"/api/v1/admin/applications/{aid}", headers=h).json()
-    model = detail["decision"]
-    assert detail["final_decision"] == "PENDING" and model in ("APPROVED", "REJECTED")
-    against = "reject" if model == "APPROVED" else "approve"
-    agree = "approve" if model == "APPROVED" else "reject"
-
-    # Going against the model needs a note.
-    no_note = client.patch(f"/api/v1/admin/applications/{aid}", json={"action": against}, headers=h)
+    # Rejecting a clear APPROVE needs a note.
+    no_note = client.patch(f"/api/v1/admin/applications/{aid}", json={"action": "reject"}, headers=officer)
     assert no_note.status_code == 422 and no_note.json()["error"]["details"][0]["field"] == "note"
-    # Agreeing with the model doesn't.
-    ok = client.patch(f"/api/v1/admin/applications/{aid}", json={"action": agree}, headers=h)
-    assert ok.status_code == 200
-    assert ok.json()["final_decision"] == model and ok.json()["status"] == "Decided"
+    ok = client.patch(f"/api/v1/admin/applications/{aid}", json={"action": "approve"}, headers=officer)
+    assert ok.status_code == 200 and ok.json()["final_decision"] == "APPROVED" and ok.json()["status"] == "Decided"
+    assert ok.json()["approved_amount"] == 5000
+    upd = client.patch(f"/api/v1/admin/applications/{aid}", json={"action": "reject", "note": "Income could not be verified"}, headers=officer).json()
+    assert upd["final_decision"] == "REJECTED" and upd["recommendation"] == "APPROVE" and upd["status"] == "Overridden"
+    assert "Income could not be verified" in upd["officer_note"]
 
-    # Changing a decision later is an override and keeps the model decision.
-    upd = client.patch(f"/api/v1/admin/applications/{aid}", json={"action": against, "note": "Manual review ok"}, headers=h)
-    u = upd.json()
-    assert upd.status_code == 200 and u["final_decision"] != model and u["decision"] == model and u["status"] == "Overridden"
-    assert "Manual review ok" in u["officer_note"]
+    public = client.get(f"/api/v1/applications/{aid}/status", params={"email": APPLICANT["email"]}).json()
+    assert public["decision"] == "REJECTED" and public["decided_at"] and "Income could not" not in str(public)
 
-    public = client.get(f"/api/v1/applications/{aid}/status", params={"email": VALID["email"]}).json()
-    assert public["decision"] == u["final_decision"] and public["model_decision"] == model
-    assert public["risk_band"] in ("Low", "Moderate", "High") and public["decided_at"]
-    # Factors explain the final (officer) decision, not the model's.
-    want = "risk" if u["final_decision"] == "REJECTED" else "strength"
-    assert all(f["direction"] == want for f in public["indicative_factors"])
-
-    stats = client.get("/api/v1/admin/stats", headers=h).json()
-    assert stats["total"] >= 1 and stats["overridden"] >= 1 and "awaiting_review" in stats
+    stats = client.get("/api/v1/admin/stats", headers=officer).json()
+    assert stats["total"] >= 1 and stats["overridden"] >= 1 and len(stats["per_day"]) == 30
     assert abs(stats["approval_rate"] + stats["rejection_rate"] - 1) < 1e-9
-    assert len(stats["per_day"]) == 30
+    assert set(stats["by_recommendation"]) == {"APPROVE", "REVIEW", "REJECT"}
 
-    csv = client.get("/api/v1/admin/applications/export.csv", headers=h)
-    assert csv.status_code == 200 and csv.headers["content-type"].startswith("text/csv")
-    assert aid in csv.text
+    csv = client.get("/api/v1/admin/applications/export.csv", headers=officer)
+    assert csv.status_code == 200 and csv.headers["content-type"].startswith("text/csv") and aid in csv.text
 
 
-def test_request_more_info_and_applicant_reply(client, token):
-    h = {"Authorization": f"Bearer {token}"}
-    created = client.post("/api/v1/applications", json={**VALID, "full_name": "Info Needed"}).json()
+def test_officer_can_approve_counter_offer(client, officer):
+    created = client.post("/api/v1/applications", json={**APPLICANT, "full_name": "Counter Offer", "loan_amount": 35000, "fico": 690, "dti": 25}).json()
+    aid, offer = created["application_id"], created["screening"]["counter_offer"]
+    r = client.patch(f"/api/v1/admin/applications/{aid}", json={"action": "approve_counter_offer"}, headers=officer)
+    if offer is None:
+        assert r.status_code == 409
+    else:
+        assert r.status_code == 200 and r.json()["approved_amount"] == offer["loan_amount"] and r.json()["status"] == "Decided"
+
+
+def test_request_more_info_and_applicant_reply(client, officer):
+    created = client.post("/api/v1/applications", json={**APPLICANT, "full_name": "Info Needed"}).json()
     aid, tok = created["application_id"], created["access_token"]
-
-    # Replying before anything was requested is refused.
-    early = client.post(f"/api/v1/applications/{aid}/reply", json={"message": "Here you go"}, headers={"X-Access-Token": tok})
-    assert early.status_code == 409
-
-    short = client.patch(f"/api/v1/admin/applications/{aid}", json={"action": "request_info", "message": "Docs?"}, headers=h)
-    assert short.status_code == 422
+    assert client.post(f"/api/v1/applications/{aid}/reply", json={"message": "Here you go"}, headers={"X-Access-Token": tok}).status_code == 409
+    assert client.patch(f"/api/v1/admin/applications/{aid}", json={"action": "request_info", "message": "Docs?"}, headers=officer).status_code == 422
     r = client.patch(f"/api/v1/admin/applications/{aid}",
-                     json={"action": "request_info", "message": "Please share your last 3 salary slips.", "note": "Income looks high"},
-                     headers=h)
+                     json={"action": "request_info", "message": "Please share your last two pay stubs.", "note": "DTI looks low"},
+                     headers=officer)
     assert r.status_code == 200 and r.json()["status"] == "Info Requested" and r.json()["final_decision"] == "PENDING"
-    assert r.json()["messages"][0] == {**r.json()["messages"][0], "author": "officer", "body": "Please share your last 3 salary slips."}
 
-    public = client.get(f"/api/v1/applications/{aid}/status", params={"email": VALID["email"]}).json()
+    public = client.get(f"/api/v1/applications/{aid}/status", params={"email": APPLICANT["email"]}).json()
     assert public["status"] == "Info Requested" and public["messages"][0]["author"] == "officer"
-    assert "Income looks high" not in str(public)  # internal note stays internal
-    assert public["risk_band"] is None  # still pending, model view hidden
+    assert "DTI looks low" not in str(public)
 
-    # Wrong credentials look like "not found".
-    bad = client.post(f"/api/v1/applications/{aid}/reply", json={"message": "Here you go", "email": "someone@else.com"})
-    assert bad.status_code == 404
-    rep = client.post(f"/api/v1/applications/{aid}/reply", json={"message": "Uploaded my salary slips, thanks.", "email": VALID["email"]})
+    assert client.post(f"/api/v1/applications/{aid}/reply", json={"message": "Here you go", "email": "someone@else.com"}).status_code == 404
+    rep = client.post(f"/api/v1/applications/{aid}/reply", json={"message": "Uploaded my pay stubs, thanks.", "email": APPLICANT["email"]})
     assert rep.status_code == 200 and rep.json()["status"] == "Pending Review"
     assert [m["author"] for m in rep.json()["messages"]] == ["officer", "applicant"]
 
-    # A second request can be answered from the applicant's own browser (access token).
-    client.patch(f"/api/v1/admin/applications/{aid}", json={"action": "request_info", "message": "And a recent bank statement please."}, headers=h)
-    rep2 = client.post(f"/api/v1/applications/{aid}/reply", json={"message": "Bank statement attached."}, headers={"X-Access-Token": tok})
-    assert rep2.status_code == 200 and len(rep2.json()["messages"]) == 4
-
-    kinds = [e["kind"] for e in client.get("/api/v1/admin/emails", params={"application_id": aid}, headers=h).json()["items"]]
-    assert kinds.count("info_requested") == 2 and "decision" not in kinds
+    kinds = [e["kind"] for e in client.get("/api/v1/admin/emails", params={"application_id": aid}, headers=officer).json()["items"]]
+    assert kinds.count("info_requested") == 1 and "decision" not in kinds
 
 
-def test_demo_mode(client):
-    p = get_predictor()
-    saved = p.model
-    p.model = None
+def test_models_unavailable_returns_503(client):
+    from app.ml.registry import get_screener
+
+    s = get_screener()
+    saved = s.engine
+    s.engine = None
     try:
-        health = client.get("/api/v1/health").json()
-        assert health["mode"] == "demo" and health["model_loaded"] is False
-        r = client.post("/api/v1/applications", json=VALID)
-        assert r.status_code == 201
-        body = r.json()
-        assert body["is_demo"] is True
-        assert body["model_version"].startswith("demo")
-        assert body["warnings"][0].startswith("Demo mode")
-        again = client.post("/api/v1/applications", json=VALID).json()
-        assert again["default_probability"] == body["default_probability"]  # deterministic
+        assert client.get("/api/v1/health").json()["mode"] == "unavailable"
+        assert client.post("/api/v1/screen", json={"loan_amount": 15000, "fico": 700, "dti": 15}).status_code == 503
+        assert client.post("/api/v1/applications", json=APPLICANT).status_code == 503
     finally:
-        p.model = saved
+        s.engine = saved
 
 
-def test_contact_message_flow(client, token):
-    h = {"Authorization": f"Bearer {token}"}
-    bad = client.post("/api/v1/contact", json={"name": "A", "email": "x", "topic": "Other", "message": "short"})
-    assert bad.status_code == 422
-    r = client.post(
-        "/api/v1/contact",
-        json={"name": "Asha Verma", "email": "asha@example.com", "topic": "Privacy", "application_id": "lw-2026-000001",
-              "message": "Please delete my application data."},
-    )
+def test_contact_message_flow(client, officer):
+    assert client.post("/api/v1/contact", json={"name": "A", "email": "x", "topic": "Other", "message": "short"}).status_code == 422
+    r = client.post("/api/v1/contact", json={"name": "Asha Verma", "email": "asha@example.com", "topic": "Privacy",
+                                             "application_id": "lw-2026-000001", "message": "Please delete my application data."})
     assert r.status_code == 201 and r.json()["reference"].startswith("LW-MSG-")
-    inbox = client.get("/api/v1/admin/messages", headers=h).json()
+    inbox = client.get("/api/v1/admin/messages", headers=officer).json()
     msg = inbox["items"][0]
     assert msg["application_id"] == "LW-2026-000001" and msg["resolved"] is False and inbox["unresolved"] >= 1
     assert client.get("/api/v1/admin/messages").status_code == 401
-    done = client.patch(f"/api/v1/admin/messages/{msg['id']}", json={"resolved": True}, headers=h)
+    done = client.patch(f"/api/v1/admin/messages/{msg['id']}", json={"resolved": True}, headers=officer)
     assert done.status_code == 200 and done.json()["resolved"] is True
 
 
-def test_admin_delete_application(client, token):
-    h = {"Authorization": f"Bearer {token}"}
-    aid = client.post("/api/v1/applications", json={**VALID, "full_name": "Delete Me"}).json()["application_id"]
+def test_admin_delete_application(client, officer):
+    aid = client.post("/api/v1/applications", json={**APPLICANT, "full_name": "Delete Me"}).json()["application_id"]
     assert client.delete(f"/api/v1/admin/applications/{aid}").status_code == 401
-    assert client.delete(f"/api/v1/admin/applications/{aid}", headers=h).status_code == 204
-    assert client.get(f"/api/v1/admin/applications/{aid}", headers=h).status_code == 404
-    assert client.get(f"/api/v1/applications/{aid}/status", params={"email": VALID["email"]}).status_code == 404
+    assert client.delete(f"/api/v1/admin/applications/{aid}", headers=officer).status_code == 204
+    assert client.get(f"/api/v1/admin/applications/{aid}", headers=officer).status_code == 404
 
 
 def test_global_rate_limit_backstop(client):
@@ -278,10 +239,8 @@ def test_global_rate_limit_backstop(client):
     saved = apps.global_submit_limiter
     apps.global_submit_limiter = apps.RateLimiter(2)
     try:
-        codes = [
-            client.post("/api/v1/applications", json=VALID, headers={"X-Forwarded-For": f"198.51.100.{i}"}).status_code
-            for i in range(4)
-        ]
+        codes = [client.post("/api/v1/applications", json=APPLICANT, headers={"X-Forwarded-For": f"198.51.100.{i}"}).status_code
+                 for i in range(4)]
     finally:
         apps.global_submit_limiter = saved
-    assert codes[:2] == [201, 201] and codes[2:] == [429, 429]  # rotating IPs doesn't bypass the global cap
+    assert codes[:2] == [201, 201] and codes[2:] == [429, 429]

@@ -1,0 +1,1031 @@
+{
+  "summary": {
+    "passed": 117,
+    "failed": 0,
+    "warnings": 1,
+    "total": 118,
+    "bad_values": 126,
+    "grid_size": 18720,
+    "seconds": 16.8,
+    "run_at": "2026-11-19T19:59:52+00:00",
+    "model_version": "lendwise-hgb-2026.11.19"
+  },
+  "test_cases": [
+    {
+      "id": "TC-01",
+      "input": "Loan 15000, FICO 700, DTI 15",
+      "expected": "Both outputs within 0 to 100",
+      "actual": "Eligibility 86.0, PD 10.34%, approve",
+      "status": "Pass"
+    },
+    {
+      "id": "TC-02",
+      "input": "FICO = 659.5",
+      "expected": "Rejected: FICO must be a whole number",
+      "actual": "FICO score must be a whole number.",
+      "status": "Pass"
+    },
+    {
+      "id": "TC-03",
+      "input": "DTI = \"18%\"",
+      "expected": "Accepted as 18",
+      "actual": "Accepted as 18",
+      "status": "Pass"
+    },
+    {
+      "id": "TC-04",
+      "input": "DTI = True",
+      "expected": "Rejected as invalid type",
+      "actual": "DTI must be a number, not true or false.",
+      "status": "Pass"
+    },
+    {
+      "id": "TC-05",
+      "input": "Loan amount = 45000",
+      "expected": "Rejected: out of range",
+      "actual": "Loan amount must be between $500 and $40,000.",
+      "status": "Pass"
+    },
+    {
+      "id": "TC-06",
+      "input": "Blank, NaN or infinity",
+      "expected": "One error message",
+      "actual": "Loan amount is required.",
+      "status": "Pass"
+    },
+    {
+      "id": "TC-07",
+      "input": "Missing input key",
+      "expected": "Validation error, no crash",
+      "actual": "DTI is missing.",
+      "status": "Pass"
+    },
+    {
+      "id": "TC-08",
+      "input": "FICO 659 vs 660 (loan 15000, DTI 15)",
+      "expected": "Eligibility falls below 40 at 659",
+      "actual": "Eligibility 27.0 vs 82.9",
+      "status": "Pass"
+    },
+    {
+      "id": "TC-09",
+      "input": "Save, reload and score again",
+      "expected": "Same outputs",
+      "actual": "Identical on 2,000 inputs",
+      "status": "Pass"
+    },
+    {
+      "id": "TC-10",
+      "input": "200 quick submissions",
+      "expected": "No old results left on screen",
+      "actual": "200 concurrent requests matched to their own inputs; web form state test passed",
+      "status": "Pass"
+    }
+  ],
+  "checks": [
+    {
+      "id": 1,
+      "group": "Input validation",
+      "name": "loan_amount: rejects blank values",
+      "status": "PASS",
+      "detail": "4 values rejected",
+      "seconds": 0.0
+    },
+    {
+      "id": 2,
+      "group": "Input validation",
+      "name": "loan_amount: rejects boolean values",
+      "status": "PASS",
+      "detail": "2 values rejected",
+      "seconds": 0.0
+    },
+    {
+      "id": 3,
+      "group": "Input validation",
+      "name": "loan_amount: rejects not finite values",
+      "status": "PASS",
+      "detail": "8 values rejected",
+      "seconds": 0.0
+    },
+    {
+      "id": 4,
+      "group": "Input validation",
+      "name": "loan_amount: rejects text values",
+      "status": "PASS",
+      "detail": "11 values rejected",
+      "seconds": 0.0
+    },
+    {
+      "id": 5,
+      "group": "Input validation",
+      "name": "loan_amount: rejects wrong type values",
+      "status": "PASS",
+      "detail": "6 values rejected",
+      "seconds": 0.0
+    },
+    {
+      "id": 6,
+      "group": "Input validation",
+      "name": "loan_amount: rejects out-of-range values",
+      "status": "PASS",
+      "detail": "8 values rejected",
+      "seconds": 0.0
+    },
+    {
+      "id": 7,
+      "group": "Input validation",
+      "name": "fico: rejects blank values",
+      "status": "PASS",
+      "detail": "4 values rejected",
+      "seconds": 0.0
+    },
+    {
+      "id": 8,
+      "group": "Input validation",
+      "name": "fico: rejects boolean values",
+      "status": "PASS",
+      "detail": "2 values rejected",
+      "seconds": 0.0
+    },
+    {
+      "id": 9,
+      "group": "Input validation",
+      "name": "fico: rejects not finite values",
+      "status": "PASS",
+      "detail": "8 values rejected",
+      "seconds": 0.0
+    },
+    {
+      "id": 10,
+      "group": "Input validation",
+      "name": "fico: rejects text values",
+      "status": "PASS",
+      "detail": "11 values rejected",
+      "seconds": 0.0
+    },
+    {
+      "id": 11,
+      "group": "Input validation",
+      "name": "fico: rejects wrong type values",
+      "status": "PASS",
+      "detail": "6 values rejected",
+      "seconds": 0.0
+    },
+    {
+      "id": 12,
+      "group": "Input validation",
+      "name": "fico: rejects out-of-range values",
+      "status": "PASS",
+      "detail": "6 values rejected",
+      "seconds": 0.0
+    },
+    {
+      "id": 13,
+      "group": "Input validation",
+      "name": "dti: rejects blank values",
+      "status": "PASS",
+      "detail": "4 values rejected",
+      "seconds": 0.0
+    },
+    {
+      "id": 14,
+      "group": "Input validation",
+      "name": "dti: rejects boolean values",
+      "status": "PASS",
+      "detail": "2 values rejected",
+      "seconds": 0.0
+    },
+    {
+      "id": 15,
+      "group": "Input validation",
+      "name": "dti: rejects not finite values",
+      "status": "PASS",
+      "detail": "8 values rejected",
+      "seconds": 0.0
+    },
+    {
+      "id": 16,
+      "group": "Input validation",
+      "name": "dti: rejects text values",
+      "status": "PASS",
+      "detail": "11 values rejected",
+      "seconds": 0.0
+    },
+    {
+      "id": 17,
+      "group": "Input validation",
+      "name": "dti: rejects wrong type values",
+      "status": "PASS",
+      "detail": "6 values rejected",
+      "seconds": 0.0
+    },
+    {
+      "id": 18,
+      "group": "Input validation",
+      "name": "dti: rejects out-of-range values",
+      "status": "PASS",
+      "detail": "7 values rejected",
+      "seconds": 0.0
+    },
+    {
+      "id": 19,
+      "group": "Input validation",
+      "name": "fico: rejects values that are not whole numbers (TC-02)",
+      "status": "PASS",
+      "detail": "4 values rejected",
+      "seconds": 0.0
+    },
+    {
+      "id": 20,
+      "group": "Input validation",
+      "name": "dti: accepts an optional % sign (TC-03)",
+      "status": "PASS",
+      "detail": "\"18%\" -> 18",
+      "seconds": 0.0
+    },
+    {
+      "id": 21,
+      "group": "Input validation",
+      "name": "loan amount accepts numeric text",
+      "status": "PASS",
+      "detail": "\"$15,000.50\" -> 15000.5",
+      "seconds": 0.0
+    },
+    {
+      "id": 22,
+      "group": "Input validation",
+      "name": "boundary values are accepted",
+      "status": "PASS",
+      "detail": "500/300/0 and 40,000/850/100 accepted",
+      "seconds": 0.0
+    },
+    {
+      "id": 23,
+      "group": "Input validation",
+      "name": "missing keys give a validation error, not a crash (TC-07)",
+      "status": "PASS",
+      "detail": "3 keys checked",
+      "seconds": 0.0
+    },
+    {
+      "id": 24,
+      "group": "Input validation",
+      "name": "wrong containers are rejected",
+      "status": "PASS",
+      "detail": "5 containers rejected",
+      "seconds": 0.0
+    },
+    {
+      "id": 25,
+      "group": "Input validation",
+      "name": "extra keys are ignored",
+      "status": "PASS",
+      "detail": "ok",
+      "seconds": 0.0
+    },
+    {
+      "id": 26,
+      "group": "Saved models",
+      "name": "artifacts load and metadata is complete",
+      "status": "PASS",
+      "detail": "lendwise-hgb-2026.11.19",
+      "seconds": 0.0
+    },
+    {
+      "id": 27,
+      "group": "Saved models",
+      "name": "save, reload and score again gives the same outputs (TC-09)",
+      "status": "PASS",
+      "detail": "identical on 2,000 inputs",
+      "seconds": 0.104
+    },
+    {
+      "id": 28,
+      "group": "Saved models",
+      "name": "monotonic constraints are stored in both models",
+      "status": "PASS",
+      "detail": "[-1, +1, -1] and [+1, -1, +1]",
+      "seconds": 0.0
+    },
+    {
+      "id": 29,
+      "group": "Saved models",
+      "name": "both models use 3-fold sigmoid calibration",
+      "status": "PASS",
+      "detail": "3 calibrated folds each",
+      "seconds": 0.0
+    },
+    {
+      "id": 30,
+      "group": "Behaviour",
+      "name": "eligibility score stays within 0 to 100 on 18,720 inputs (TC-01)",
+      "status": "PASS",
+      "detail": "min 0.01, max 86.01",
+      "seconds": 0.0
+    },
+    {
+      "id": 31,
+      "group": "Behaviour",
+      "name": "default probability stays within 0 to 100 on 18,720 inputs (TC-01)",
+      "status": "PASS",
+      "detail": "min 2.85, max 31.47",
+      "seconds": 0.0
+    },
+    {
+      "id": 32,
+      "group": "Behaviour",
+      "name": "eligibility: grid never moves against the loan amount constraint",
+      "status": "PASS",
+      "detail": "18,252 neighbouring pairs, 0 violations",
+      "seconds": 0.0
+    },
+    {
+      "id": 33,
+      "group": "Behaviour",
+      "name": "eligibility: grid never moves against the FICO constraint",
+      "status": "PASS",
+      "detail": "18,200 neighbouring pairs, 0 violations",
+      "seconds": 0.0
+    },
+    {
+      "id": 34,
+      "group": "Behaviour",
+      "name": "eligibility: grid never moves against the DTI constraint",
+      "status": "PASS",
+      "detail": "17,280 neighbouring pairs, 0 violations",
+      "seconds": 0.0
+    },
+    {
+      "id": 35,
+      "group": "Behaviour",
+      "name": "charge-off: grid never moves against the loan amount constraint",
+      "status": "PASS",
+      "detail": "18,252 neighbouring pairs, 0 violations",
+      "seconds": 0.0
+    },
+    {
+      "id": 36,
+      "group": "Behaviour",
+      "name": "charge-off: grid never moves against the FICO constraint",
+      "status": "PASS",
+      "detail": "18,200 neighbouring pairs, 0 violations",
+      "seconds": 0.0
+    },
+    {
+      "id": 37,
+      "group": "Behaviour",
+      "name": "charge-off: grid never moves against the DTI constraint",
+      "status": "PASS",
+      "detail": "17,280 neighbouring pairs, 0 violations",
+      "seconds": 0.0
+    },
+    {
+      "id": 38,
+      "group": "Behaviour checks (24)",
+      "name": "eligibility: score can only fall with Loan amount (FICO score 700, DTI 10)",
+      "status": "PASS",
+      "detail": "never moves the wrong way",
+      "seconds": 0.005
+    },
+    {
+      "id": 39,
+      "group": "Behaviour checks (24)",
+      "name": "eligibility: score can only fall with Loan amount (FICO score 680, DTI 20)",
+      "status": "PASS",
+      "detail": "never moves the wrong way",
+      "seconds": 0.005
+    },
+    {
+      "id": 40,
+      "group": "Behaviour checks (24)",
+      "name": "eligibility: score can only fall with Loan amount (FICO score 720, DTI 25)",
+      "status": "PASS",
+      "detail": "never moves the wrong way",
+      "seconds": 0.01
+    },
+    {
+      "id": 41,
+      "group": "Behaviour checks (24)",
+      "name": "eligibility: score can only fall with Loan amount (FICO score 760, DTI 30)",
+      "status": "PASS",
+      "detail": "never moves the wrong way",
+      "seconds": 0.007
+    },
+    {
+      "id": 42,
+      "group": "Behaviour checks (24)",
+      "name": "eligibility: score can only rise with FICO score (Loan amount 5,000, DTI 10)",
+      "status": "PASS",
+      "detail": "never moves the wrong way",
+      "seconds": 0.007
+    },
+    {
+      "id": 43,
+      "group": "Behaviour checks (24)",
+      "name": "eligibility: score can only rise with FICO score (Loan amount 15,000, DTI 20)",
+      "status": "PASS",
+      "detail": "never moves the wrong way",
+      "seconds": 0.008
+    },
+    {
+      "id": 44,
+      "group": "Behaviour checks (24)",
+      "name": "eligibility: score can only rise with FICO score (Loan amount 25,000, DTI 25)",
+      "status": "PASS",
+      "detail": "never moves the wrong way",
+      "seconds": 0.01
+    },
+    {
+      "id": 45,
+      "group": "Behaviour checks (24)",
+      "name": "eligibility: score can only rise with FICO score (Loan amount 35,000, DTI 30)",
+      "status": "PASS",
+      "detail": "never moves the wrong way",
+      "seconds": 0.007
+    },
+    {
+      "id": 46,
+      "group": "Behaviour checks (24)",
+      "name": "eligibility: score can only fall with DTI (Loan amount 5,000, FICO score 700)",
+      "status": "PASS",
+      "detail": "never moves the wrong way",
+      "seconds": 0.006
+    },
+    {
+      "id": 47,
+      "group": "Behaviour checks (24)",
+      "name": "eligibility: score can only fall with DTI (Loan amount 15,000, FICO score 680)",
+      "status": "PASS",
+      "detail": "never moves the wrong way",
+      "seconds": 0.006
+    },
+    {
+      "id": 48,
+      "group": "Behaviour checks (24)",
+      "name": "eligibility: score can only fall with DTI (Loan amount 25,000, FICO score 720)",
+      "status": "PASS",
+      "detail": "never moves the wrong way",
+      "seconds": 0.009
+    },
+    {
+      "id": 49,
+      "group": "Behaviour checks (24)",
+      "name": "eligibility: score can only fall with DTI (Loan amount 35,000, FICO score 760)",
+      "status": "PASS",
+      "detail": "never moves the wrong way",
+      "seconds": 0.008
+    },
+    {
+      "id": 50,
+      "group": "Behaviour checks (24)",
+      "name": "charge-off: score can only rise with Loan amount (FICO score 700, DTI 10)",
+      "status": "PASS",
+      "detail": "never moves the wrong way",
+      "seconds": 0.005
+    },
+    {
+      "id": 51,
+      "group": "Behaviour checks (24)",
+      "name": "charge-off: score can only rise with Loan amount (FICO score 680, DTI 20)",
+      "status": "PASS",
+      "detail": "never moves the wrong way",
+      "seconds": 0.005
+    },
+    {
+      "id": 52,
+      "group": "Behaviour checks (24)",
+      "name": "charge-off: score can only rise with Loan amount (FICO score 720, DTI 25)",
+      "status": "PASS",
+      "detail": "never moves the wrong way",
+      "seconds": 0.004
+    },
+    {
+      "id": 53,
+      "group": "Behaviour checks (24)",
+      "name": "charge-off: score can only rise with Loan amount (FICO score 760, DTI 30)",
+      "status": "PASS",
+      "detail": "never moves the wrong way",
+      "seconds": 0.005
+    },
+    {
+      "id": 54,
+      "group": "Behaviour checks (24)",
+      "name": "charge-off: score can only fall with FICO score (Loan amount 5,000, DTI 10)",
+      "status": "PASS",
+      "detail": "never moves the wrong way",
+      "seconds": 0.006
+    },
+    {
+      "id": 55,
+      "group": "Behaviour checks (24)",
+      "name": "charge-off: score can only fall with FICO score (Loan amount 15,000, DTI 20)",
+      "status": "PASS",
+      "detail": "never moves the wrong way",
+      "seconds": 0.006
+    },
+    {
+      "id": 56,
+      "group": "Behaviour checks (24)",
+      "name": "charge-off: score can only fall with FICO score (Loan amount 25,000, DTI 25)",
+      "status": "PASS",
+      "detail": "never moves the wrong way",
+      "seconds": 0.006
+    },
+    {
+      "id": 57,
+      "group": "Behaviour checks (24)",
+      "name": "charge-off: score can only fall with FICO score (Loan amount 35,000, DTI 30)",
+      "status": "PASS",
+      "detail": "never moves the wrong way",
+      "seconds": 0.006
+    },
+    {
+      "id": 58,
+      "group": "Behaviour checks (24)",
+      "name": "charge-off: score can only rise with DTI (Loan amount 5,000, FICO score 700)",
+      "status": "PASS",
+      "detail": "never moves the wrong way",
+      "seconds": 0.005
+    },
+    {
+      "id": 59,
+      "group": "Behaviour checks (24)",
+      "name": "charge-off: score can only rise with DTI (Loan amount 15,000, FICO score 680)",
+      "status": "PASS",
+      "detail": "never moves the wrong way",
+      "seconds": 0.006
+    },
+    {
+      "id": 60,
+      "group": "Behaviour checks (24)",
+      "name": "charge-off: score can only rise with DTI (Loan amount 25,000, FICO score 720)",
+      "status": "PASS",
+      "detail": "never moves the wrong way",
+      "seconds": 0.005
+    },
+    {
+      "id": 61,
+      "group": "Behaviour checks (24)",
+      "name": "charge-off: score can only rise with DTI (Loan amount 35,000, FICO score 760)",
+      "status": "PASS",
+      "detail": "never moves the wrong way",
+      "seconds": 0.005
+    },
+    {
+      "id": 62,
+      "group": "Policy",
+      "name": "loss severity matches the training data (about 50.3%)",
+      "status": "PASS",
+      "detail": "50.32%",
+      "seconds": 0.185
+    },
+    {
+      "id": 63,
+      "group": "Policy",
+      "name": "expected-loss thresholds are 11.07% and 6.04%",
+      "status": "PASS",
+      "detail": "reject above 11.07%, approve up to 6.04%",
+      "seconds": 0.0
+    },
+    {
+      "id": 64,
+      "group": "Policy",
+      "name": "eligibility below 40 is always rejected",
+      "status": "PASS",
+      "detail": "18 combinations",
+      "seconds": 0.0
+    },
+    {
+      "id": 65,
+      "group": "Policy",
+      "name": "expected loss above 11.07% is rejected",
+      "status": "PASS",
+      "detail": "PD 22.01% rejected, 22.00% not",
+      "seconds": 0.0
+    },
+    {
+      "id": 66,
+      "group": "Policy",
+      "name": "a range-guard flag sends the case to review instead of approval",
+      "status": "PASS",
+      "detail": "ok",
+      "seconds": 0.0
+    },
+    {
+      "id": 67,
+      "group": "Policy",
+      "name": "approve only when eligibility >= 75 and expected loss <= 6.04%",
+      "status": "PASS",
+      "detail": "edges checked",
+      "seconds": 0.0
+    },
+    {
+      "id": 68,
+      "group": "Policy",
+      "name": "every decision on the 18,720-input grid follows the rules",
+      "status": "PASS",
+      "detail": "approve 2,249, review 3,407, reject 13,064",
+      "seconds": 0.021
+    },
+    {
+      "id": 69,
+      "group": "Policy",
+      "name": "tiers match the decision thresholds",
+      "status": "PASS",
+      "detail": "Likely/Borderline/Unlikely and Low/Moderate/High",
+      "seconds": 0.0
+    },
+    {
+      "id": 70,
+      "group": "Policy",
+      "name": "charge-off risk is hidden when eligibility is Unlikely",
+      "status": "PASS",
+      "detail": "ok",
+      "seconds": 0.016
+    },
+    {
+      "id": 71,
+      "group": "Consistency",
+      "name": "eligibility: single and batch scores are identical",
+      "status": "PASS",
+      "detail": "300 rows",
+      "seconds": 1.183
+    },
+    {
+      "id": 72,
+      "group": "Consistency",
+      "name": "charge-off: single and batch scores are identical",
+      "status": "PASS",
+      "detail": "300 rows",
+      "seconds": 1.101
+    },
+    {
+      "id": 73,
+      "group": "Consistency",
+      "name": "range guard: single and batch flags are identical",
+      "status": "PASS",
+      "detail": "300 rows",
+      "seconds": 2.272
+    },
+    {
+      "id": 74,
+      "group": "Consistency",
+      "name": "the interface result matches the batch scores",
+      "status": "PASS",
+      "detail": "60 rows",
+      "seconds": 1.347
+    },
+    {
+      "id": 75,
+      "group": "Consistency",
+      "name": "repeated scoring is deterministic",
+      "status": "PASS",
+      "detail": "grid scored twice",
+      "seconds": 0.357
+    },
+    {
+      "id": 76,
+      "group": "Extreme cases",
+      "name": "corner $500 / FICO 300 / DTI 0 gives a valid result",
+      "status": "PASS",
+      "detail": "reject, eligibility 0.0",
+      "seconds": 0.016
+    },
+    {
+      "id": 77,
+      "group": "Extreme cases",
+      "name": "corner $500 / FICO 300 / DTI 100 gives a valid result",
+      "status": "PASS",
+      "detail": "reject, eligibility 0.0",
+      "seconds": 0.018
+    },
+    {
+      "id": 78,
+      "group": "Extreme cases",
+      "name": "corner $500 / FICO 850 / DTI 0 gives a valid result",
+      "status": "PASS",
+      "detail": "review, eligibility 86.0",
+      "seconds": 0.018
+    },
+    {
+      "id": 79,
+      "group": "Extreme cases",
+      "name": "corner $500 / FICO 850 / DTI 100 gives a valid result",
+      "status": "PASS",
+      "detail": "reject, eligibility 3.2",
+      "seconds": 0.015
+    },
+    {
+      "id": 80,
+      "group": "Extreme cases",
+      "name": "corner $40,000 / FICO 300 / DTI 0 gives a valid result",
+      "status": "PASS",
+      "detail": "reject, eligibility 0.0",
+      "seconds": 0.016
+    },
+    {
+      "id": 81,
+      "group": "Extreme cases",
+      "name": "corner $40,000 / FICO 300 / DTI 100 gives a valid result",
+      "status": "PASS",
+      "detail": "reject, eligibility 0.0",
+      "seconds": 0.016
+    },
+    {
+      "id": 82,
+      "group": "Extreme cases",
+      "name": "corner $40,000 / FICO 850 / DTI 0 gives a valid result",
+      "status": "PASS",
+      "detail": "reject, eligibility 37.4",
+      "seconds": 0.016
+    },
+    {
+      "id": 83,
+      "group": "Extreme cases",
+      "name": "corner $40,000 / FICO 850 / DTI 100 gives a valid result",
+      "status": "PASS",
+      "detail": "reject, eligibility 1.8",
+      "seconds": 0.016
+    },
+    {
+      "id": 84,
+      "group": "Extreme cases",
+      "name": "FICO 659 vs 660 shows LendingClub's cut-off (TC-08)",
+      "status": "PASS",
+      "detail": "27.0 vs 82.9",
+      "seconds": 0.033
+    },
+    {
+      "id": 85,
+      "group": "Extreme cases",
+      "name": "high-FICO, low-DTI, small loan is approved",
+      "status": "PASS",
+      "detail": "eligibility 86.0, PD 4.65%",
+      "seconds": 0.016
+    },
+    {
+      "id": 86,
+      "group": "Extreme cases",
+      "name": "the raw models accept NaN and infinity, so the validator must sit in front",
+      "status": "WARN",
+      "detail": "models returned scores for NaN/inf inputs; only the validator stops them",
+      "seconds": 0.004
+    },
+    {
+      "id": 87,
+      "group": "Stability",
+      "name": "eligibility: at most 1% of 551 profiles jump by more than 10 points",
+      "status": "PASS",
+      "detail": "0.7% of 551 profiles",
+      "seconds": 0.032
+    },
+    {
+      "id": 88,
+      "group": "Stability",
+      "name": "charge-off: at most 1% of 551 profiles jump by more than 3 points",
+      "status": "PASS",
+      "detail": "0.2% of 551 profiles",
+      "seconds": 0.041
+    },
+    {
+      "id": 89,
+      "group": "Reported metrics",
+      "name": "eligibility hold-out AUC matches the reported value",
+      "status": "PASS",
+      "detail": "0.9097",
+      "seconds": 0.038
+    },
+    {
+      "id": 90,
+      "group": "Reported metrics",
+      "name": "eligibility accuracy, precision and recall at 50% match",
+      "status": "PASS",
+      "detail": "0.885 / 0.831 / 0.966",
+      "seconds": 0.011
+    },
+    {
+      "id": 91,
+      "group": "Reported metrics",
+      "name": "eligibility agrees with the lender rule on at least 99% of applications",
+      "status": "PASS",
+      "detail": "99.3%",
+      "seconds": 0.001
+    },
+    {
+      "id": 92,
+      "group": "Reported metrics",
+      "name": "charge-off AUC on the 2015 test year matches the reported value",
+      "status": "PASS",
+      "detail": "0.6265",
+      "seconds": 0.021
+    },
+    {
+      "id": 93,
+      "group": "Reported metrics",
+      "name": "mean predicted default rate is within 2 points of the observed rate",
+      "status": "PASS",
+      "detail": "13.9% vs 14.8%",
+      "seconds": 0.0
+    },
+    {
+      "id": 94,
+      "group": "Reported metrics",
+      "name": "Brier score beats the base-rate forecast",
+      "status": "PASS",
+      "detail": "0.1232 vs 0.1265",
+      "seconds": 0.008
+    },
+    {
+      "id": 95,
+      "group": "Reported metrics",
+      "name": "no risk decile is off by more than 3 percentage points",
+      "status": "PASS",
+      "detail": "largest gap 1.9 points",
+      "seconds": 0.0
+    },
+    {
+      "id": 96,
+      "group": "Reported metrics",
+      "name": "observed default rate rises across the risk deciles",
+      "status": "PASS",
+      "detail": "5.4% to 25.1%",
+      "seconds": 0.0
+    },
+    {
+      "id": 97,
+      "group": "Reported metrics",
+      "name": "the risk model is trained on 2012 to 2014 and tested on 2015 only",
+      "status": "PASS",
+      "detail": "300,000 train, 100,000 test",
+      "seconds": 0.039
+    },
+    {
+      "id": 98,
+      "group": "Reported metrics",
+      "name": "eligibility data is a 50/50 sample of 2016 with an 80:20 split",
+      "status": "PASS",
+      "detail": "100,000 + 100,000; 160,000 / 40,000",
+      "seconds": 0.012
+    },
+    {
+      "id": 99,
+      "group": "Range guard",
+      "name": "limits are the 0.1st and 99.9th percentiles of the training loans",
+      "status": "PASS",
+      "detail": "loan_amount 1000 to 35000; fico 660 to 825; dti 0.33 to 39.17",
+      "seconds": 0.014
+    },
+    {
+      "id": 100,
+      "group": "Range guard",
+      "name": "inputs outside the training range are flagged",
+      "status": "PASS",
+      "detail": "$35,001 flagged, $15,000 not",
+      "seconds": 0.017
+    },
+    {
+      "id": 101,
+      "group": "Range guard",
+      "name": "the Isolation Forest flags about 1% of training loans or fewer",
+      "status": "PASS",
+      "detail": "0.74%",
+      "seconds": 0.258
+    },
+    {
+      "id": 102,
+      "group": "Range guard",
+      "name": "a flag never causes a rejection on its own",
+      "status": "PASS",
+      "detail": "2,263 flagged grid inputs went to review",
+      "seconds": 0.004
+    },
+    {
+      "id": 103,
+      "group": "Counter-offer",
+      "name": "offers are smaller, in $500 steps, and approved by the rules",
+      "status": "PASS",
+      "detail": "2 offers checked",
+      "seconds": 0.111
+    },
+    {
+      "id": 104,
+      "group": "Counter-offer",
+      "name": "the offer is the largest approved amount",
+      "status": "PASS",
+      "detail": "$1,500 approved, $2,000 not",
+      "seconds": 0.034
+    },
+    {
+      "id": 105,
+      "group": "Counter-offer",
+      "name": "approved applications get no counter-offer",
+      "status": "PASS",
+      "detail": "ok",
+      "seconds": 0.015
+    },
+    {
+      "id": 106,
+      "group": "Interface",
+      "name": "TC-01: a valid application returns both outputs within 0 to 100",
+      "status": "PASS",
+      "detail": "eligibility 86.0, PD 10.34%",
+      "seconds": 0.034
+    },
+    {
+      "id": 107,
+      "group": "Interface",
+      "name": "TC-02: the API answers fico errors with one message and no scores",
+      "status": "PASS",
+      "detail": "FICO score must be a whole number.",
+      "seconds": 0.003
+    },
+    {
+      "id": 108,
+      "group": "Interface",
+      "name": "TC-04: the API answers dti errors with one message and no scores",
+      "status": "PASS",
+      "detail": "DTI must be a number, not true or false.",
+      "seconds": 0.002
+    },
+    {
+      "id": 109,
+      "group": "Interface",
+      "name": "TC-05: the API answers loan_amount errors with one message and no scores",
+      "status": "PASS",
+      "detail": "Loan amount must be between $500 and $40,000.",
+      "seconds": 0.002
+    },
+    {
+      "id": 110,
+      "group": "Interface",
+      "name": "TC-06: the API answers loan_amount errors with one message and no scores",
+      "status": "PASS",
+      "detail": "Loan amount is required.",
+      "seconds": 0.002
+    },
+    {
+      "id": 111,
+      "group": "Interface",
+      "name": "TC-07: the API answers dti errors with one message and no scores",
+      "status": "PASS",
+      "detail": "DTI is missing.",
+      "seconds": 0.002
+    },
+    {
+      "id": 112,
+      "group": "Interface",
+      "name": "TC-08: the API shows the FICO cut-off",
+      "status": "PASS",
+      "detail": "659 reject, 660 likely",
+      "seconds": 0.035
+    },
+    {
+      "id": 113,
+      "group": "Interface",
+      "name": "TC-10: 200 quick submissions each get their own result",
+      "status": "PASS",
+      "detail": "200 concurrent requests matched to their own inputs; web form state test passed",
+      "seconds": 4.143
+    },
+    {
+      "id": 114,
+      "group": "Interface",
+      "name": "an application can be submitted, tracked and decided by an officer",
+      "status": "PASS",
+      "detail": "LW-2026-000001 approved by the officer",
+      "seconds": 0.891
+    },
+    {
+      "id": 115,
+      "group": "Interface",
+      "name": "a malformed request body is rejected with one message",
+      "status": "PASS",
+      "detail": "Some fields are invalid. Please review and try again.",
+      "seconds": 0.002
+    },
+    {
+      "id": 116,
+      "group": "Interface",
+      "name": "officer pages require a login",
+      "status": "PASS",
+      "detail": "401 without a valid token",
+      "seconds": 0.005
+    },
+    {
+      "id": 117,
+      "group": "Interface",
+      "name": "median response time is under 50 ms",
+      "status": "PASS",
+      "detail": "median 19.1 ms over 200 requests",
+      "seconds": 4.097
+    },
+    {
+      "id": 118,
+      "group": "Interface",
+      "name": "health check reports the models as live",
+      "status": "PASS",
+      "detail": "lendwise-hgb-2026.11.19",
+      "seconds": 0.003
+    }
+  ]
+}

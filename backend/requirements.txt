@@ -1,17 +1,19 @@
-scikit-learn==1.6.1
-numpy==2.2.6
-pandas==2.2.3
-scipy==1.15.3
-joblib==1.5.1
-fastapi==0.115.12
-uvicorn[standard]==0.34.3
-pydantic==2.11.5
-pydantic-settings==2.9.1
-email-validator==2.2.0
-sqlalchemy==2.0.41
-psycopg[binary]==3.2.9
-pyjwt==2.10.1
-bcrypt==4.3.0
-kaggle==1.7.4.5
-pytest==8.4.0
+# Runtime and tests. Versions match the report (Table 3.1): Python 3.13, pandas 2.3.3,
+# NumPy 2.4.1, scikit-learn 1.9.1. The saved models must be loaded with the same scikit-learn.
+scikit-learn==1.9.1
+numpy==2.4.1
+pandas==2.3.3
+scipy==1.18.1
+joblib==1.6.0
+fastapi==0.165.0
+starlette==1.10.0
+uvicorn[standard]==0.54.0
+pydantic==2.14.4
+pydantic-settings==2.16.3
+email-validator==2.4.0
+sqlalchemy==2.1.9
+psycopg[binary]==3.3.9
+pyjwt==2.15.1
+bcrypt==5.0.0
 httpx==0.28.1
+pytest==9.2.0

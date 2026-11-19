@@ -1,6 +1,6 @@
-# Large / generated files — see README "Large files"
-backend/app/ml/artifacts/model.pkl
-backend/data/*.csv
+# Raw LendingClub files (about 650 MB) and large derived files: see backend/scripts/download_data.py
+backend/data/raw/
+backend/data/cohorts/chargeoff_extended.csv.gz
 *.db
 *.db-journal
 

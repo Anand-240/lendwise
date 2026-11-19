@@ -1,0 +1,3 @@
+# Extra packages for rebuilding the datasets and models from the raw LendingClub files.
+-r requirements.txt
+kagglehub==1.0.3

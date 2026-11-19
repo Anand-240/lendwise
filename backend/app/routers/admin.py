@@ -18,7 +18,6 @@ from app import email_templates as tpl
 from app.db import get_db
 from app.emailer import queue_email
 from app.middleware import RateLimiter, client_key
-from app.ml.predictor import get_predictor
 from app.services import add_message, send_decision_email, thread
 from app.models_db import Application, ContactMessage, OutboundEmail, utcnow
 from app.schemas import AdminApplication, AdminPage, AdminUpdate, AdminEmail, AdminEmailPage, ContactOut, ContactPage, LoginIn, LoginOut, MessageUpdate, ReplyIn, ReplyOut
@@ -33,8 +32,9 @@ def _tz() -> ZoneInfo:
 SORTABLE = {
     "created_at": Application.created_at,
     "default_probability": Application.default_probability,
+    "eligibility_score": Application.eligibility_score,
     "loan_amount": Application.loan_amount,
-    "income": Application.income,
+    "fico": Application.fico,
     "full_name": Application.full_name,
 }
 
@@ -54,8 +54,11 @@ def login(body: LoginIn, request: Request) -> LoginOut:
 def _filtered(
     q: str | None,
     decision: str | None,
-    risk_band: str | None,
+    recommendation: str | None,
+    risk_tier: str | None,
+    eligibility_tier: str | None,
     status_: str | None,
+    flagged: bool | None,
     date_from: date | None,
     date_to: date | None,
 ) -> Select:
@@ -65,10 +68,16 @@ def _filtered(
         stmt = stmt.where(or_(Application.full_name.ilike(like), Application.application_id.ilike(like)))
     if decision:
         stmt = stmt.where(Application.final_decision == decision)
-    if risk_band:
-        stmt = stmt.where(Application.risk_band == risk_band)
+    if recommendation:
+        stmt = stmt.where(Application.recommendation == recommendation)
+    if risk_tier:
+        stmt = stmt.where(Application.risk_tier == risk_tier)
+    if eligibility_tier:
+        stmt = stmt.where(Application.eligibility_tier == eligibility_tier)
     if status_:
         stmt = stmt.where(Application.status == status_)
+    if flagged is not None:
+        stmt = stmt.where(Application.guard_flagged.is_(flagged))
     if date_from:
         stmt = stmt.where(Application.created_at >= datetime.combine(date_from, time.min, tzinfo=_tz()))
     if date_to:
@@ -81,26 +90,29 @@ class _Filters:
         self,
         q: str | None = Query(None, max_length=80, description="Search by applicant name or application ID"),
         decision: Literal["APPROVED", "REJECTED", "PENDING"] | None = None,
-        risk_band: Literal["Low", "Moderate", "High"] | None = None,
-        status: Literal["Pending Review", "Info Requested", "Decided", "Overridden", "Under Review"] | None = None,
+        recommendation: Literal["APPROVE", "REVIEW", "REJECT"] | None = None,
+        risk_tier: Literal["Low", "Moderate", "High"] | None = None,
+        eligibility_tier: Literal["Likely", "Borderline", "Unlikely"] | None = None,
+        status: Literal["Pending Review", "Info Requested", "Decided", "Overridden"] | None = None,
+        flagged: bool | None = None,
         date_from: date | None = None,
         date_to: date | None = None,
     ):
-        self.stmt = _filtered(q, decision, risk_band, status, date_from, date_to)
+        self.stmt = _filtered(q, decision, recommendation, risk_tier, eligibility_tier, status, flagged, date_from, date_to)
 
 
 @router.get("/applications/export.csv")
 def export_csv(filters: _Filters = Depends(), _: str = Depends(require_officer), db: Session = Depends(get_db)):
     rows = db.scalars(filters.stmt.order_by(Application.created_at.desc())).all()
     fields = [
-        "application_id", "created_at", "full_name", "email", "phone", "loan_amount", "tenure_months", "purpose",
-        "income", "age", "experience", "marital_status", "house_ownership", "car_ownership", "profession", "city",
-        "state", "current_job_years", "current_house_years", "risk_class", "default_probability", "confidence",
-        "risk_band", "decision", "final_decision", "status", "officer_note", "model_version", "is_demo",
+        "application_id", "created_at", "full_name", "email", "purpose", "loan_amount", "fico", "dti",
+        "eligibility_score", "eligibility_tier", "default_probability", "expected_loss", "risk_tier",
+        "guard_flagged", "recommendation", "counter_offer", "final_decision", "approved_amount", "status",
+        "officer_note", "model_version",
     ]
     buf = io.StringIO()
     writer = csv.writer(buf)
-    writer.writerow(["model_decision" if f == "decision" else f for f in fields])
+    writer.writerow(fields)
     for r in rows:
         values = []
         for f in fields:
@@ -120,7 +132,7 @@ def export_csv(filters: _Filters = Depends(), _: str = Depends(require_officer),
 @router.get("/applications", response_model=AdminPage)
 def list_applications(
     filters: _Filters = Depends(),
-    sort: Literal["created_at", "default_probability", "loan_amount", "income", "full_name"] = "created_at",
+    sort: Literal["created_at", "default_probability", "eligibility_score", "loan_amount", "fico", "full_name"] = "created_at",
     order: Literal["asc", "desc"] = "desc",
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
@@ -181,18 +193,29 @@ def update_application(
         queue_email(db, row.email, tpl.info_requested(row, body.message), "info_requested", background, row.application_id)
         return _detail(db, row)
 
-    new_decision = "APPROVED" if body.action == "approve" else "REJECTED"
-    against_model = new_decision != row.decision
+    if body.action == "approve_counter_offer" and row.counter_offer is None:
+        raise HTTPException(status.HTTP_409_CONFLICT, "This application has no counter-offer to approve.")
+    new_decision = "REJECTED" if body.action == "reject" else "APPROVED"
+    amount = None if new_decision == "REJECTED" else (row.counter_offer if body.action == "approve_counter_offer" else row.loan_amount)
+    # Going against a clear APPROVE or REJECT recommendation is an override and needs a reason.
+    # Approving the counter-offer follows the rules, because the rules approve that amount.
+    against_model = (
+        (row.recommendation == "APPROVE" and new_decision == "REJECTED")
+        or (row.recommendation == "REJECT" and body.action == "approve")
+    )
     if against_model and (not body.note or len(body.note) < 5):
         raise RequestValidationError(
-            [{"loc": ("body", "note"), "msg": "Add a note (at least 5 characters) explaining why you are going against the model.", "type": "value_error"}]
+            [{"loc": ("body", "note"), "msg": "Add a note (at least 5 characters) explaining why you are going against the recommendation.", "type": "value_error"}]
         )
     already_decided = row.final_decision in ("APPROVED", "REJECTED")
-    changed = row.final_decision != new_decision
+    changed = row.final_decision != new_decision or row.approved_amount != amount
     row.final_decision = new_decision
+    row.approved_amount = amount
     row.status = "Overridden" if against_model else "Decided"
-    log(f"{'Approved' if new_decision == 'APPROVED' else 'Rejected'}{' (against model recommendation)' if against_model else ''}."
-        + (f" {body.note}" if body.note else ""))
+    verb = "Rejected" if new_decision == "REJECTED" else (
+        f"Approved the counter-offer of ${amount:,.0f}" if body.action == "approve_counter_offer" else f"Approved ${amount:,.0f}"
+    )
+    log(f"{verb}{' (against the recommendation)' if against_model else ''}." + (f" {body.note}" if body.note else ""))
     if body.message:
         add_message(db, row.application_id, "officer", body.message)
     row.reviewed_at = utcnow()
@@ -286,22 +309,24 @@ def stats(days: int = Query(30, ge=7, le=365), _: str = Depends(require_officer)
         select(
             Application.created_at,
             Application.final_decision,
+            Application.recommendation,
             Application.default_probability,
-            Application.profession,
-            Application.state,
-            Application.risk_band,
+            Application.eligibility_score,
+            Application.eligibility_tier,
+            Application.risk_tier,
+            Application.guard_flagged,
+            Application.counter_offer,
             Application.status,
-            Application.is_demo,
         )
     ).all()
-    md = get_predictor().metadata["options"]
-    labels = {col: {o["value"]: o["label"] for o in md[col]} for col in ("Profession", "STATE")}
 
     total = len(rows)
     approved = sum(1 for r in rows if r.final_decision == "APPROVED")
     rejected = sum(1 for r in rows if r.final_decision == "REJECTED")
     decided = approved + rejected
-    awaiting = sum(1 for r in rows if r.final_decision == "PENDING")
+    # Agreement: officer decisions on clear APPROVE / REJECT recommendations that followed them.
+    clear = [r for r in rows if r.final_decision != "PENDING" and r.recommendation in ("APPROVE", "REJECT")]
+    agreed = sum(1 for r in clear if (r.recommendation == "APPROVE") == (r.final_decision == "APPROVED"))
 
     tz = _tz()
     today = datetime.now(tz).date()
@@ -312,27 +337,13 @@ def stats(days: int = Query(30, ge=7, le=365), _: str = Depends(require_officer)
         if d >= start:
             per_day[d][r.final_decision] += 1
 
-    def group(attr: str, col: str, top: int = 10):
-        g: dict[str, Counter] = defaultdict(Counter)
-        for r in rows:
-            if r.final_decision in ("APPROVED", "REJECTED"):
-                g[getattr(r, attr)][r.final_decision] += 1
-        out = [
-            {
-                "value": k,
-                "label": labels[col].get(k, k),
-                "total": c["APPROVED"] + c["REJECTED"],
-                "approved": c["APPROVED"],
-                "rejected": c["REJECTED"],
-                "approval_rate": c["APPROVED"] / (c["APPROVED"] + c["REJECTED"]),
-            }
-            for k, c in g.items()
-        ]
-        return sorted(out, key=lambda x: (-x["total"], x["label"]))[:top]
-
-    bins = [0] * 10
+    edges = [0, 5, 10, 12, 15, 20, 22, 30, 100]
+    bins = [0] * (len(edges) - 1)
     for r in rows:
-        bins[min(int(r.default_probability * 10), 9)] += 1
+        for i in range(len(bins)):
+            if r.default_probability < edges[i + 1] or i == len(bins) - 1:
+                bins[i] += 1
+                break
 
     return {
         "total": total,
@@ -340,25 +351,28 @@ def stats(days: int = Query(30, ge=7, le=365), _: str = Depends(require_officer)
         "rejected": rejected,
         "approval_rate": approved / decided if decided else 0.0,
         "rejection_rate": rejected / decided if decided else 0.0,
-        "awaiting_review": awaiting,
+        "awaiting_review": sum(1 for r in rows if r.final_decision == "PENDING"),
         "info_requested": sum(1 for r in rows if r.status == "Info Requested"),
-        "model_would_approve": sum(1 for r in rows if r.final_decision == "PENDING" and r.default_probability < 0.5),
-        "avg_default_probability": (sum(r.default_probability for r in rows) / total) if total else 0.0,
-        "under_review": sum(1 for r in rows if r.status == "Under Review"),
         "overridden": sum(1 for r in rows if r.status == "Overridden"),
-        "demo_count": sum(1 for r in rows if r.is_demo),
-        "by_risk_band": {b: sum(1 for r in rows if r.risk_band == b) for b in ("Low", "Moderate", "High")},
+        "flagged": sum(1 for r in rows if r.guard_flagged),
+        "counter_offers": sum(1 for r in rows if r.counter_offer is not None),
+        "agreement_rate": agreed / len(clear) if clear else None,
+        "avg_default_probability": (sum(r.default_probability for r in rows) / total) if total else 0.0,
+        "avg_eligibility": (sum(r.eligibility_score for r in rows) / total) if total else 0.0,
+        "by_recommendation": {k: sum(1 for r in rows if r.recommendation == k) for k in ("APPROVE", "REVIEW", "REJECT")},
+        "by_eligibility_tier": {k: sum(1 for r in rows if r.eligibility_tier == k) for k in ("Likely", "Borderline", "Unlikely")},
+        "by_risk_tier": {k: sum(1 for r in rows if r.risk_tier == k) for k in ("Low", "Moderate", "High")},
         "per_day": [
             {
                 "date": (start + timedelta(days=i)).isoformat(),
                 "approved": per_day[start + timedelta(days=i)]["APPROVED"],
                 "rejected": per_day[start + timedelta(days=i)]["REJECTED"],
+                "pending": per_day[start + timedelta(days=i)]["PENDING"],
             }
             for i in range(days)
         ],
         "probability_histogram": [
-            {"bucket": f"{i * 10}–{(i + 1) * 10}%", "count": bins[i]} for i in range(10)
+            {"bucket": f"{edges[i]} to {edges[i + 1]}%" if i < len(bins) - 1 else f"{edges[i]}%+", "count": bins[i]}
+            for i in range(len(bins))
         ],
-        "by_profession": group("profession", "Profession"),
-        "by_state": group("state", "STATE"),
     }

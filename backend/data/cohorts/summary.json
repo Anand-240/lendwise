@@ -1,0 +1,25 @@
+{
+  "source": "LendingClub accepted and rejected loan files, 2007 to 2018 Q4 (Kaggle: wordsforthewise/lending-club)",
+  "eligibility": {
+    "rows": 200000,
+    "train_rows": 160000,
+    "test_rows": 40000,
+    "accepted_2016_raw": 434407,
+    "rejected_2016_raw": 4769874,
+    "accepted_2016_clean": 434217,
+    "rejected_2016_clean": 981122,
+    "real_acceptance_rate": 0.08347108851347573,
+    "rejected_emp_lt_1y_share": 0.9085
+  },
+  "chargeoff": {
+    "train_rows": 300000,
+    "test_rows": 100000,
+    "train_rate": 0.13255666666666666,
+    "test_rate": 0.1482,
+    "train_years": "2012 to 2014",
+    "test_year": "2015"
+  },
+  "severity": 0.5032175565234033,
+  "seed": 42,
+  "build_seconds": 177.4
+}

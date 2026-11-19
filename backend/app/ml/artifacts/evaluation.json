@@ -1,0 +1,288 @@
+{
+  "variants": [
+    {
+      "variant": "A",
+      "label": "Baseline (no constraints)",
+      "eligibility_auc": 0.9842635412499999,
+      "eligibility_jumpy": 0.0544464609800363,
+      "chargeoff_auc": 0.6269334756373659,
+      "chargeoff_jumpy": 0.047186932849364795
+    },
+    {
+      "variant": "B",
+      "label": "Monotonic constraints only",
+      "eligibility_auc": 0.90983583,
+      "eligibility_jumpy": 0.012704174228675136,
+      "chargeoff_auc": 0.6263738739809228,
+      "chargeoff_jumpy": 0.030852994555353903
+    },
+    {
+      "variant": "C",
+      "label": "Constraints + regularisation (chosen)",
+      "eligibility_auc": 0.9096909474999999,
+      "eligibility_jumpy": 0.007259528130671506,
+      "chargeoff_auc": 0.6264602355130153,
+      "chargeoff_jumpy": 0.0018148820326678765
+    },
+    {
+      "variant": "D",
+      "label": "Heavier regularisation",
+      "eligibility_auc": 0.90855075,
+      "eligibility_jumpy": 0.003629764065335753,
+      "chargeoff_auc": 0.6259268991853086,
+      "chargeoff_jumpy": 0.0
+    }
+  ],
+  "behaviour": {
+    "checks": 24,
+    "unconstrained_failed": 24,
+    "constrained_failed": 0,
+    "unconstrained_failures": [
+      "eligibility: loan_amount at {'loan_amount': 5000, 'fico': 700, 'dti': 10}: moved 28.2 points the wrong way",
+      "eligibility: fico at {'loan_amount': 5000, 'fico': 700, 'dti': 10}: moved 94.2 points the wrong way",
+      "eligibility: dti at {'loan_amount': 5000, 'fico': 700, 'dti': 10}: moved 82.9 points the wrong way",
+      "eligibility: loan_amount at {'loan_amount': 15000, 'fico': 680, 'dti': 20}: moved 19.8 points the wrong way",
+      "eligibility: fico at {'loan_amount': 15000, 'fico': 680, 'dti': 20}: moved 94.6 points the wrong way",
+      "eligibility: dti at {'loan_amount': 15000, 'fico': 680, 'dti': 20}: moved 87.0 points the wrong way",
+      "eligibility: loan_amount at {'loan_amount': 25000, 'fico': 720, 'dti': 25}: moved 21.2 points the wrong way",
+      "eligibility: fico at {'loan_amount': 25000, 'fico': 720, 'dti': 25}: moved 95.0 points the wrong way",
+      "eligibility: dti at {'loan_amount': 25000, 'fico': 720, 'dti': 25}: moved 85.3 points the wrong way",
+      "eligibility: loan_amount at {'loan_amount': 35000, 'fico': 760, 'dti': 30}: moved 38.5 points the wrong way",
+      "eligibility: fico at {'loan_amount': 35000, 'fico': 760, 'dti': 30}: moved 92.9 points the wrong way",
+      "eligibility: dti at {'loan_amount': 35000, 'fico': 760, 'dti': 30}: moved 80.1 points the wrong way",
+      "chargeoff: loan_amount at {'loan_amount': 5000, 'fico': 700, 'dti': 10}: moved 7.3 points the wrong way",
+      "chargeoff: fico at {'loan_amount': 5000, 'fico': 700, 'dti': 10}: moved 1.2 points the wrong way",
+      "chargeoff: dti at {'loan_amount': 5000, 'fico': 700, 'dti': 10}: moved 2.4 points the wrong way",
+      "chargeoff: loan_amount at {'loan_amount': 15000, 'fico': 680, 'dti': 20}: moved 3.5 points the wrong way",
+      "chargeoff: fico at {'loan_amount': 15000, 'fico': 680, 'dti': 20}: moved 1.9 points the wrong way",
+      "chargeoff: dti at {'loan_amount': 15000, 'fico': 680, 'dti': 20}: moved 1.0 points the wrong way",
+      "chargeoff: loan_amount at {'loan_amount': 25000, 'fico': 720, 'dti': 25}: moved 3.2 points the wrong way",
+      "chargeoff: fico at {'loan_amount': 25000, 'fico': 720, 'dti': 25}: moved 4.6 points the wrong way",
+      "chargeoff: dti at {'loan_amount': 25000, 'fico': 720, 'dti': 25}: moved 7.2 points the wrong way",
+      "chargeoff: loan_amount at {'loan_amount': 35000, 'fico': 760, 'dti': 30}: moved 6.3 points the wrong way",
+      "chargeoff: fico at {'loan_amount': 35000, 'fico': 760, 'dti': 30}: moved 6.3 points the wrong way",
+      "chargeoff: dti at {'loan_amount': 35000, 'fico': 760, 'dti': 30}: moved 8.6 points the wrong way"
+    ]
+  },
+  "nudge": {
+    "profiles": 551,
+    "loan_pct": 1,
+    "fico_points": 1,
+    "dti_points": 0.5,
+    "eligibility_limit": 10.0,
+    "risk_limit": 3.0
+  },
+  "audit": {
+    "fico_multiple_of_5": {
+      "accepted": 1.0,
+      "rejected": 0.19543,
+      "unconstrained_700": 88.17229507458472,
+      "unconstrained_701": 56.62892155721225
+    },
+    "rows": [
+      {
+        "label": "All features (incl. employment length)",
+        "auc": 0.99194659
+      },
+      {
+        "label": "Without employment length",
+        "auc": 0.9809579825000001
+      },
+      {
+        "label": "FICO alone",
+        "auc": 0.95563994875
+      },
+      {
+        "label": "Without emp. length, FICO >= 660 only",
+        "auc": 0.9534547866686913
+      },
+      {
+        "label": "Employment length alone",
+        "auc": 0.92475546875
+      },
+      {
+        "label": "Loan amount and DTI only",
+        "auc": 0.8403265087499999
+      }
+    ],
+    "purpose_adds": 3.781499999988558e-05,
+    "three_inputs_unconstrained": 0.9813836224999998,
+    "rejected_emp_lt_1y_share": 0.9085,
+    "accepted_emp_lt_1y_share": 0.07412
+  },
+  "subgroups": [
+    {
+      "group": "FICO",
+      "band": "660 to 679",
+      "rows": 37804,
+      "default_rate": 19.25193101259126,
+      "auc": 0.5724511112363015
+    },
+    {
+      "group": "FICO",
+      "band": "680 to 699",
+      "rows": 26529,
+      "default_rate": 15.778958875193187,
+      "auc": 0.5732377501285767
+    },
+    {
+      "group": "FICO",
+      "band": "700 to 719",
+      "rows": 17574,
+      "default_rate": 11.767383634915216,
+      "auc": 0.5665179741990434
+    },
+    {
+      "group": "FICO",
+      "band": "720 to 749",
+      "rows": 11368,
+      "default_rate": 8.321604503870514,
+      "auc": 0.572596623340689
+    },
+    {
+      "group": "FICO",
+      "band": "750 to 850",
+      "rows": 6725,
+      "default_rate": 5.085501858736059,
+      "auc": 0.5888569601454156
+    },
+    {
+      "group": "Loan amount",
+      "band": "$0 to $4,999",
+      "rows": 11456,
+      "default_rate": 15.153631284916202,
+      "auc": 0.5858129586960232
+    },
+    {
+      "group": "Loan amount",
+      "band": "$5,000 to $14,999",
+      "rows": 53963,
+      "default_rate": 15.442062153697906,
+      "auc": 0.6225271075274307
+    },
+    {
+      "group": "Loan amount",
+      "band": "$15,000 to $24,999",
+      "rows": 24088,
+      "default_rate": 13.953005645964794,
+      "auc": 0.6433362463387722
+    },
+    {
+      "group": "Loan amount",
+      "band": "$25,000 to $40,000",
+      "rows": 10493,
+      "default_rate": 13.246926522443534,
+      "auc": 0.641523389000543
+    },
+    {
+      "group": "DTI",
+      "band": "0 to 9.99",
+      "rows": 17689,
+      "default_rate": 11.204703488043418,
+      "auc": 0.6001767386712153
+    },
+    {
+      "group": "DTI",
+      "band": "10 to 19.99",
+      "rows": 40975,
+      "default_rate": 13.24222086638194,
+      "auc": 0.6155441319026
+    },
+    {
+      "group": "DTI",
+      "band": "20 to 29.99",
+      "rows": 30611,
+      "default_rate": 16.768481918264676,
+      "auc": 0.6054639386112284
+    },
+    {
+      "group": "DTI",
+      "band": "30 to 100",
+      "rows": 10725,
+      "default_rate": 21.24941724941725,
+      "auc": 0.598091694108726
+    }
+  ],
+  "algorithms": [
+    {
+      "algorithm": "Logistic regression",
+      "auc": 0.6247046704145449
+    },
+    {
+      "algorithm": "Linear discriminant analysis",
+      "auc": 0.6237552211416073
+    },
+    {
+      "algorithm": "Quadratic discriminant analysis",
+      "auc": 0.6187557027762753
+    },
+    {
+      "algorithm": "Gaussian naive Bayes",
+      "auc": 0.6173684689784498
+    },
+    {
+      "algorithm": "Decision tree",
+      "auc": 0.6218645392990125
+    },
+    {
+      "algorithm": "Random forest",
+      "auc": 0.6264620111447727
+    },
+    {
+      "algorithm": "Extra trees",
+      "auc": 0.6257656264308431
+    },
+    {
+      "algorithm": "AdaBoost",
+      "auc": 0.6217354453647259
+    },
+    {
+      "algorithm": "Gradient boosting",
+      "auc": 0.6283043092994465
+    },
+    {
+      "algorithm": "k-nearest neighbours (k=500, 60,000-loan sample)",
+      "auc": 0.621594790614081
+    },
+    {
+      "algorithm": "Neural network (MLP)",
+      "auc": 0.6244093348878725
+    },
+    {
+      "algorithm": "Histogram gradient boosting (LendWise)",
+      "auc": 0.6264602355130153
+    }
+  ],
+  "algorithms_range": {
+    "min": 0.6173684689784498,
+    "max": 0.6283043092994465
+  },
+  "extended_inputs": {
+    "auc": 0.6683704572265639,
+    "fields": [
+      "loan_amount",
+      "fico",
+      "dti",
+      "emp_length",
+      "home_ownership",
+      "credit_history_months",
+      "annual_inc",
+      "revol_util",
+      "revol_bal",
+      "inq_last_6mths",
+      "delinq_2yrs",
+      "open_acc",
+      "total_acc",
+      "pub_rec",
+      "mort_acc",
+      "pub_rec_bankruptcies"
+    ]
+  },
+  "severity": {
+    "mean_severity": 0.5032175573350316,
+    "r2_regression": 0.0024917227179510615,
+    "r2_mean": -9.910437906435199e-05,
+    "r2_gain": 0.0025908270970154135
+  },
+  "seconds": 242.5
+}

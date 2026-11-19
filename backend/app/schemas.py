@@ -6,95 +6,75 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
-from app.ml.predictor import get_predictor
-
-Purpose = Literal["Personal", "Home", "Vehicle", "Education", "Business", "Medical", "Other"]
-Decision = Literal["APPROVED", "REJECTED"]
+Purpose = Literal[
+    "Debt consolidation", "Credit card refinancing", "Home improvement", "Major purchase",
+    "Car", "Medical", "Business", "Other",
+]
+PURPOSES: tuple[str, ...] = Purpose.__args__  # type: ignore[attr-defined]
+Recommendation = Literal["APPROVE", "REVIEW", "REJECT"]
 FinalDecision = Literal["APPROVED", "REJECTED", "PENDING"]
-Status = Literal["Pending Review", "Info Requested", "Decided", "Overridden", "Under Review"]
-
-PHONE_RE = re.compile(r"^[6-9]\d{9}$")
-
-# API field -> dataset column for the categorical model inputs.
-CATEGORICAL_FIELDS = {
-    "marital_status": "Married/Single",
-    "house_ownership": "House_Ownership",
-    "car_ownership": "Car_Ownership",
-    "profession": "Profession",
-    "state": "STATE",
-    "city": "CITY",
-}
-# API field -> dataset column for numeric inputs that get soft range warnings.
-NUMERIC_FIELDS = {
-    "income": "Income",
-    "age": "Age",
-    "experience": "Experience",
-    "current_job_years": "CURRENT_JOB_YRS",
-    "current_house_years": "CURRENT_HOUSE_YRS",
-}
+Status = Literal["Pending Review", "Info Requested", "Decided", "Overridden"]
 
 
-class ModelInputs(BaseModel):
-    """The 11 raw inputs the model uses. Category values are RAW dataset strings."""
+# ---- Screening ------------------------------------------------------------------------------------
+class ScreenIn(BaseModel):
+    """Documentation only: the endpoint accepts any JSON and runs the report's validator on it."""
 
-    income: int = Field(ge=0, le=100_000_000, description="Annual income in INR")
-    age: int = Field(ge=21, le=79)
-    experience: int = Field(ge=0, le=61, description="Total years of work experience")
-    marital_status: str
-    house_ownership: str
-    car_ownership: str
-    profession: str
-    city: str
-    state: str
-    current_job_years: int = Field(ge=0, le=61)
-    current_house_years: int = Field(ge=0, le=79)
-
-    @model_validator(mode="after")
-    def _consistency(self) -> "ModelInputs":
-        md = get_predictor().metadata
-        errors = []
-        for field, col in CATEGORICAL_FIELDS.items():
-            allowed = {o["value"] for o in md["options"][col]}
-            if getattr(self, field) not in allowed:
-                errors.append(f"{field}: '{getattr(self, field)}' is not a recognised value")
-        if self.experience > self.age - 18:
-            errors.append("experience: cannot exceed age minus 18")
-        if self.current_job_years > self.experience:
-            errors.append("current_job_years: cannot exceed total experience")
-        if self.state in md["state_to_cities"] and self.city not in md["state_to_cities"][self.state]:
-            errors.append("city: does not belong to the selected state")
-        if errors:
-            raise ValueError("; ".join(errors))
-        return self
-
-    def to_model_row(self) -> dict[str, Any]:
-        row: dict[str, Any] = {col: getattr(self, f) for f, col in CATEGORICAL_FIELDS.items()}
-        row.update({col: getattr(self, f) for f, col in NUMERIC_FIELDS.items()})
-        return row
-
-    def range_warnings(self) -> list[str]:
-        ranges = get_predictor().metadata["ranges"]
-        warnings = []
-        for field, col in NUMERIC_FIELDS.items():
-            r = ranges.get(col)
-            value = getattr(self, field)
-            if r and not (r["min"] <= value <= r["max"]):
-                warnings.append(
-                    f"{field.replace('_', ' ').capitalize()} ({value:,}) is outside the range seen in "
-                    f"training data ({r['min']:,.0f}–{r['max']:,.0f}); the prediction may be less reliable."
-                )
-        return warnings
+    loan_amount: float | str = Field(description="US dollars, 500 to 40,000. Numbers or numeric text such as \"15,000\".")
+    fico: int | str = Field(description="Whole number, 300 to 850.")
+    dti: float | str = Field(description="Debt-to-income ratio in percent, 0 to 100. An optional % sign is allowed.")
 
 
-class ApplicationCreate(ModelInputs):
+class Eligibility(BaseModel):
+    score: float
+    tier: Literal["Likely", "Borderline", "Unlikely"]
+
+
+class ChargeOff(BaseModel):
+    probability: float
+    tier: Literal["Low", "Moderate", "High"]
+    expected_loss: float
+
+
+class Guard(BaseModel):
+    flagged: bool
+    reasons: list[str]
+
+
+class CounterOffer(BaseModel):
+    loan_amount: float
+    eligibility: Eligibility
+    charge_off: ChargeOff
+
+
+class ScreenInputs(BaseModel):
+    loan_amount: float
+    fico: int
+    dti: float
+
+
+class ScreeningOut(BaseModel):
+    inputs: ScreenInputs
+    eligibility: Eligibility
+    charge_off: ChargeOff | None
+    decision: Recommendation
+    reasons: list[str]
+    guard: Guard
+    counter_offer: CounterOffer | None
+    model_version: str
+    elapsed_ms: float | None = None
+
+
+# ---- Applications ---------------------------------------------------------------------------------
+class ApplicationCreate(BaseModel):
     full_name: str = Field(min_length=2, max_length=80)
     email: EmailStr
-    phone: str
-    loan_amount: int = Field(ge=10_000, le=10_000_000)
-    tenure_months: int = Field(ge=6, le=360)
     purpose: Purpose
     consent: bool
-    phone_verification_token: str | None = Field(default=None, max_length=2000)
+    # Validated by app.ml.validator (Table A.1) so the API, the form and the tests share one rule set.
+    loan_amount: Any = None
+    fico: Any = None
+    dti: Any = None
 
     @field_validator("full_name")
     @classmethod
@@ -106,16 +86,6 @@ class ApplicationCreate(ModelInputs):
             raise ValueError("may contain letters, spaces, dots, apostrophes and hyphens only")
         return v
 
-    @field_validator("phone")
-    @classmethod
-    def _phone(cls, v: str) -> str:
-        v = re.sub(r"[\s\-]", "", v)
-        if v.startswith("+91"):
-            v = v[3:]
-        if not PHONE_RE.fullmatch(v):
-            raise ValueError("must be a 10-digit Indian mobile number starting with 6-9")
-        return v
-
     @field_validator("consent")
     @classmethod
     def _consent(cls, v: bool) -> bool:
@@ -124,33 +94,13 @@ class ApplicationCreate(ModelInputs):
         return v
 
 
-class Factor(BaseModel):
-    key: str
-    label: str
-    direction: Literal["risk", "strength"]
-    detail: str | None = None
-    value: float | None = None
-    median: float | None = None
-
-
 class ApplicantSummary(BaseModel):
     full_name: str
     email: str
-    phone_masked: str
-    age: int
-    marital_status: str
-    profession: str
-    experience: int
-    current_job_years: int
-    income: int
-    state: str
-    city: str
-    house_ownership: str
-    current_house_years: int
-    car_ownership: str
-    loan_amount: int
-    tenure_months: int
     purpose: str
+    loan_amount: float
+    fico: int
+    dti: float
 
 
 class EmailSummary(BaseModel):
@@ -170,31 +120,18 @@ class ThreadMessage(BaseModel):
 
 
 class ApplicationResult(BaseModel):
-    """Applicant-facing view. While the application awaits an officer, model outputs are withheld."""
+    """Applicant-facing view: the screening result plus the officer's final decision."""
 
     application_id: str
-    decision: FinalDecision
-    model_decision: Decision | None
     status: Status
-    risk_class: int | None
-    default_probability: float | None
-    approval_score: float | None
-    confidence: float | None
-    risk_band: Literal["Low", "Moderate", "High"] | None
-    indicative_factors: list[Factor]
-    engineered_features: dict[str, Any]
-    warnings: list[str]
-    estimated_emi: float | None
-    interest_rate: float
-    model_version: str
-    is_demo: bool
-    timestamp: datetime
+    decision: FinalDecision
+    approved_amount: float | None
+    screening: ScreeningOut
     applicant: ApplicantSummary
-    officer_note_present: bool = False
-    phone_verified: bool = False
+    timestamp: datetime
+    decided_at: datetime | None = None
     emails: list[EmailSummary] = []
     messages: list[ThreadMessage] = []
-    decided_at: datetime | None = None
 
 
 class ApplicationCreated(ApplicationResult):
@@ -204,12 +141,12 @@ class ApplicationCreated(ApplicationResult):
 class HealthOut(BaseModel):
     status: str
     model_loaded: bool
-    mode: Literal["live", "demo"]
+    mode: Literal["live", "unavailable"]
     model_version: str
     email_mode: Literal["live", "demo"]
-    sms_mode: Literal["live", "demo"]
 
 
+# ---- Officer --------------------------------------------------------------------------------------
 class LoginIn(BaseModel):
     email: EmailStr
     password: str = Field(min_length=1, max_length=200)
@@ -230,37 +167,26 @@ class AdminApplication(BaseModel):
     updated_at: datetime
     full_name: str
     email: str
-    phone: str
-    loan_amount: int
-    tenure_months: int
     purpose: str
-    income: int
-    age: int
-    experience: int
-    marital_status: str
-    house_ownership: str
-    car_ownership: str
-    profession: str
-    city: str
-    state: str
-    current_job_years: int
-    current_house_years: int
-    engineered_features: dict[str, Any]
-    risk_class: int
+    loan_amount: float
+    fico: int
+    dti: float
+    eligibility_score: float
+    eligibility_tier: str
     default_probability: float
-    confidence: float
-    risk_band: str
-    decision: str
-    final_decision: str
-    indicative_factors: list[dict[str, Any]]
-    warnings: list[str]
+    expected_loss: float
+    risk_tier: str
+    guard_flagged: bool
+    guard_reasons: list[str]
+    recommendation: str
+    recommendation_reasons: list[str]
+    counter_offer: float | None
     model_version: str
-    is_demo: bool
-    interest_rate: float
+    final_decision: str
+    approved_amount: float | None
     status: str
     officer_note: str | None
     reviewed_at: datetime | None
-    phone_verified: bool
     messages: list[ThreadMessage] = []
 
 
@@ -275,7 +201,7 @@ class AdminPage(BaseModel):
 class AdminUpdate(BaseModel):
     """Officer action. `note` is internal; `message` is shown and emailed to the applicant."""
 
-    action: Literal["approve", "reject", "request_info"]
+    action: Literal["approve", "approve_counter_offer", "reject", "request_info"]
     note: str | None = Field(default=None, max_length=2000)
     message: str | None = Field(default=None, max_length=2000)
 
@@ -335,6 +261,12 @@ class ContactCreated(BaseModel):
     reference: str
 
 
+class ReplyOut(BaseModel):
+    created_at: datetime
+    body: str
+    status: str
+
+
 class ContactOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -347,13 +279,7 @@ class ContactOut(BaseModel):
     application_id: str | None
     message: str
     resolved: bool
-    replies: list["ReplyOut"] = []
-
-
-class ReplyOut(BaseModel):
-    created_at: datetime
-    body: str
-    status: str
+    replies: list[ReplyOut] = []
 
 
 class ContactPage(BaseModel):
@@ -379,40 +305,6 @@ class ReplyIn(BaseModel):
         return v
 
 
-class OtpSendIn(BaseModel):
-    phone: str
-
-    @field_validator("phone")
-    @classmethod
-    def _phone(cls, v: str) -> str:
-        v = re.sub(r"[\s\-]", "", v)
-        if v.startswith("+91"):
-            v = v[3:]
-        if not PHONE_RE.fullmatch(v):
-            raise ValueError("must be a 10-digit Indian mobile number starting with 6-9")
-        return v
-
-
-class OtpSendOut(BaseModel):
-    verification_id: str
-    phone_masked: str
-    expires_in: int
-    resend_after: int
-    mode: Literal["live", "demo"]
-    demo_code: str | None = None
-
-
-class OtpVerifyIn(BaseModel):
-    verification_id: str = Field(min_length=10, max_length=64)
-    code: str = Field(pattern=r"^\d{6}$")
-
-
-class OtpVerifyOut(BaseModel):
-    verified: bool
-    token: str
-    expires_in: int
-
-
 class AdminEmail(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -434,5 +326,3 @@ class AdminEmailPage(BaseModel):
     items: list[AdminEmail]
     total: int
     mode: Literal["live", "demo"]
-
-ContactOut.model_rebuild()
