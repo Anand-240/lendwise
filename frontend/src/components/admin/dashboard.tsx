@@ -244,7 +244,9 @@ export function AdminDashboard() {
       <div id="dashboard" className="container-page space-y-6 py-8">
         <div>
           <h1 className="text-2xl font-semibold text-navy">Applications dashboard</h1>
-          <p className="text-sm text-stone-600">Every application arrives with its screening result. You make the final decision.</p>
+          <p className="text-sm text-stone-600">
+            Every application arrives with its screening result. Click <strong>Decide</strong> on a row to approve, approve the counter-offer, reject or ask for more information.
+          </p>
         </div>
 
         {error && (
@@ -361,7 +363,7 @@ export function AdminDashboard() {
           </div>
 
           <div className="relative overflow-x-auto">
-            <table className="w-full min-w-[66rem] text-left text-sm">
+            <table className="w-full min-w-[72rem] text-left text-sm">
               <thead className="bg-stone-50 text-xs text-stone-500">
                 <tr>
                   <th scope="col" className="px-4 py-3 font-medium">Application</th>
@@ -374,19 +376,31 @@ export function AdminDashboard() {
                   <th scope="col" className="px-4 py-3 font-medium">Recommendation</th>
                   <th scope="col" className="px-4 py-3 font-medium">Decision</th>
                   <th scope="col" className="px-4 py-3 font-medium">Status</th>
+                  <th scope="col" className="px-4 py-3 font-medium"><span className="sr-only">Action</span></th>
                 </tr>
               </thead>
               <tbody aria-busy={loading}>
                 {loading && !page
                   ? Array.from({ length: 6 }).map((_, i) => (
                       <tr key={i} className="border-t border-stone-100">
-                        <td colSpan={10} className="px-4 py-3"><Skeleton className="h-6 w-full" /></td>
+                        <td colSpan={11} className="px-4 py-3"><Skeleton className="h-6 w-full" /></td>
                       </tr>
                     ))
                   : page?.items.map((a) => (
-                      <tr key={a.id} className="border-t border-stone-100 hover:bg-stone-50/70">
+                      <tr
+                        key={a.id}
+                        onClick={() => openApplication(a.application_id)}
+                        className="cursor-pointer border-t border-stone-100 hover:bg-stone-50/70"
+                      >
                         <td className="px-4 py-3">
-                          <button type="button" onClick={() => openApplication(a.application_id)} className="font-mono text-xs font-semibold text-brand hover:underline">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openApplication(a.application_id);
+                            }}
+                            className="font-mono text-xs font-semibold text-brand hover:underline"
+                          >
                             {a.application_id}
                           </button>
                           {a.guard_flagged && (
@@ -413,11 +427,24 @@ export function AdminDashboard() {
                         <td className="px-4 py-3"><RecommendationBadge decision={a.recommendation} /></td>
                         <td className="px-4 py-3"><DecisionBadge decision={a.final_decision} overridden={a.status === "Overridden"} /></td>
                         <td className="px-4 py-3 text-stone-600">{a.status}</td>
+                        <td className="px-4 py-3 text-right">
+                          <Button
+                            size="sm"
+                            variant={a.final_decision === "PENDING" ? "brand" : "outline"}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openApplication(a.application_id);
+                            }}
+                            aria-label={`${a.final_decision === "PENDING" ? "Decide on" : "View"} application ${a.application_id}`}
+                          >
+                            {a.final_decision === "PENDING" ? "Decide" : "View"}
+                          </Button>
+                        </td>
                       </tr>
                     ))}
                 {page && page.items.length === 0 && (
                   <tr>
-                    <td colSpan={10} className="px-4 py-12 text-center text-stone-500">No applications match these filters.</td>
+                    <td colSpan={11} className="px-4 py-12 text-center text-stone-500">No applications match these filters.</td>
                   </tr>
                 )}
               </tbody>
