@@ -17,7 +17,9 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.config import get_settings
-from app.db import init_db
+from sqlalchemy.exc import OperationalError
+
+from app.db import DatabaseUnavailable, ensure_db
 from app.middleware import RequestContextMiddleware
 from app.ml.registry import get_screener
 from app.ml.validator import InputError
@@ -33,9 +35,10 @@ logging.getLogger("uvicorn.access").disabled = True
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    init_db()
+    database_ok = ensure_db(force=True)  # never raises: screening works without the database
     get_screener().load()
-    log.info("LendWise API ready (models=%s, email=%s)", get_screener().mode, settings.email_mode)
+    log.info("LendWise API ready (models=%s, database=%s, email=%s)", get_screener().mode,
+             "ok" if database_ok else "unavailable", settings.email_mode)
     yield
 
 
@@ -98,6 +101,23 @@ async def validation_error(request: Request, exc: RequestValidationError):
 async def input_error(request: Request, exc: InputError):
     # One clear message and nothing scored (report Section 3.1.2).
     return _error(request, 422, "VALIDATION_ERROR", exc.message, [exc.as_dict()])
+
+
+DB_DOWN = (
+    "Saved applications and the officer dashboard are temporarily unavailable because the database "
+    "cannot be reached. Screening still works. Please try again in a few minutes."
+)
+
+
+@app.exception_handler(DatabaseUnavailable)
+async def database_unavailable(request: Request, exc: DatabaseUnavailable):
+    return _error(request, 503, "DATABASE_UNAVAILABLE", DB_DOWN, headers={"Retry-After": "30"})
+
+
+@app.exception_handler(OperationalError)
+async def database_error(request: Request, exc: OperationalError):
+    log.error("Database error rid=%s: %s", getattr(request.state, "request_id", None), type(exc.orig).__name__)
+    return _error(request, 503, "DATABASE_UNAVAILABLE", DB_DOWN, headers={"Retry-After": "30"})
 
 
 @app.exception_handler(Exception)

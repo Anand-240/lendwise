@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FlaskConical, ServerCrash } from "lucide-react";
+import { DatabaseZap, FlaskConical, ServerCrash } from "lucide-react";
 
-type State = "ok" | "unavailable" | "down" | null;
+type State = "ok" | "unavailable" | "nodb" | "down" | null;
 
 /** Site-wide banner: shows when the models are not loaded or the API is down. */
 export function StatusBanner() {
@@ -16,7 +16,7 @@ export function StatusBanner() {
         if (!alive) return;
         if (!r.ok) return setState("down");
         const h = await r.json();
-        setState(h.mode === "live" ? "ok" : "unavailable");
+        setState(h.mode !== "live" ? "unavailable" : h.database === "unavailable" ? "nodb" : "ok");
       })
       .catch(() => alive && setState("down"));
     return () => {
@@ -30,6 +30,16 @@ export function StatusBanner() {
         <p className="container-page flex items-center justify-center gap-2 py-2 text-center text-sm font-medium">
           <FlaskConical className="size-4 shrink-0" aria-hidden />
           The screening models are not loaded right now, so applications cannot be scored. Please try again shortly.
+        </p>
+      </div>
+    );
+  }
+  if (state === "nodb") {
+    return (
+      <div role="status" className="no-print border-b border-amber-200 bg-amber-50 text-amber-900">
+        <p className="container-page flex items-center justify-center gap-2 py-2 text-center text-sm font-medium">
+          <DatabaseZap className="size-4 shrink-0" aria-hidden />
+          Saving applications is paused because the database is offline. Screening still works.
         </p>
       </div>
     );

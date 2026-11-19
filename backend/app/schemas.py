@@ -143,6 +143,7 @@ class HealthOut(BaseModel):
     model_loaded: bool
     mode: Literal["live", "unavailable"]
     model_version: str
+    database: Literal["ok", "unavailable"]
     email_mode: Literal["live", "demo"]
 
 

@@ -152,6 +152,7 @@ export type Health = {
   model_loaded: boolean;
   mode: "live" | "unavailable";
   model_version: string;
+  database: "ok" | "unavailable";
   email_mode: "live" | "demo";
 };
 

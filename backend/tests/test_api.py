@@ -244,3 +244,30 @@ def test_global_rate_limit_backstop(client):
     finally:
         apps.global_submit_limiter = saved
     assert codes[:2] == [201, 201] and codes[2:] == [429, 429]
+
+
+def test_api_keeps_screening_when_the_database_is_down(client, officer, monkeypatch):
+    """A paused Supabase project must not take the whole API down."""
+    from sqlalchemy.exc import OperationalError
+
+    from app import db as db_module
+
+    def unreachable():
+        raise OperationalError("connect", {}, Exception("tenant/user not found"))
+
+    monkeypatch.setattr(db_module, "_ready", False)
+    monkeypatch.setattr(db_module, "_last_try", 0.0)
+    monkeypatch.setattr(db_module, "init_db", unreachable)
+
+    assert client.get("/api/v1/health").json()["database"] == "unavailable"
+    assert client.post("/api/v1/screen", json={"loan_amount": 15000, "fico": 700, "dti": 15}).status_code == 200
+    down = client.post("/api/v1/applications", json=APPLICANT)
+    assert down.status_code == 503 and down.json()["error"]["code"] == "DATABASE_UNAVAILABLE"
+    assert down.headers["Retry-After"] == "30"
+    assert client.get("/api/v1/admin/stats", headers=officer).status_code == 503
+
+    # Once the database is back, the next retry picks it up.
+    monkeypatch.setattr(db_module, "init_db", lambda: None)
+    monkeypatch.setattr(db_module, "_last_try", 0.0)
+    assert client.get("/api/v1/health").json()["database"] == "ok"
+    assert client.post("/api/v1/applications", json=APPLICANT).status_code == 201
