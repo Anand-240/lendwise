@@ -1,32 +1,43 @@
 import type { Metadata, Viewport } from "next";
-import { IBM_Plex_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { SiteHeader } from "@/components/site/header";
 import { SiteFooter } from "@/components/site/footer";
 import { StatusBanner } from "@/components/site/status-banner";
 import { LazyToaster } from "@/components/site/lazy-toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { SITE_NAME, SITE_URL } from "@/lib/site";
+import { SITE_NAME, SITE_TITLE, SITE_URL } from "@/lib/site";
 
-const plex = IBM_Plex_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-sans", display: "swap" });
+// IBM Plex Sans, self-hosted from @fontsource so builds never depend on fetching Google Fonts.
+const plex = localFont({
+  src: [
+    { path: "../../node_modules/@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../../node_modules/@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../../node_modules/@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "../../node_modules/@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
+  variable: "--font-sans",
+  display: "swap",
+  fallback: ["ui-sans-serif", "system-ui", "sans-serif"],
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "LendWise — Instant AI-powered loan decisions",
+    default: SITE_TITLE,
     template: "%s · LendWise",
   },
   description:
-    "Apply for a loan online and get an instant, transparent decision from a machine-learning risk model. 100% digital, decision in seconds.",
+    "LendWise screens a loan application from three inputs (loan amount, FICO score and DTI) with two monotonic, calibrated gradient boosting models trained on public LendingClub data, and helps a human reviewer decide.",
   applicationName: SITE_NAME,
-  keywords: ["loan", "personal loan", "instant loan decision", "EMI calculator", "AI credit risk", "LendWise"],
+  keywords: ["loan screening", "credit risk", "charge-off prediction", "LendingClub", "gradient boosting", "monotonic constraints", "calibration", "LendWise"],
   openGraph: {
     type: "website",
     siteName: SITE_NAME,
-    locale: "en_IN",
+    locale: "en_US",
     url: SITE_URL,
-    title: "LendWise — Instant AI-powered loan decisions",
-    description: "Apply online and get an instant, transparent loan decision from an ML risk model.",
+    title: SITE_TITLE,
+    description: "Eligibility screening and charge-off risk from loan amount, FICO score and DTI, with an officer making the final call.",
   },
   twitter: { card: "summary_large_image" },
   robots: { index: true, follow: true },
@@ -40,7 +51,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en-IN" className={plex.variable}>
+    <html lang="en" className={plex.variable}>
       <body className="flex min-h-dvh flex-col bg-white font-sans text-stone-900">
         <a
           href="#main"

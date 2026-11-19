@@ -3,35 +3,32 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "./logo";
-import { DISCLAIMER } from "@/lib/site";
+import { DISCLAIMER, PROJECT } from "@/lib/site";
 
 const COLUMNS = [
   {
-    title: "Loans",
+    title: "Use LendWise",
     links: [
-      { href: "/apply?purpose=Personal", label: "Personal loan" },
-      { href: "/apply?purpose=Home", label: "Home loan" },
-      { href: "/apply?purpose=Vehicle", label: "Vehicle loan" },
-      { href: "/apply?purpose=Education", label: "Education loan" },
-      { href: "/apply?purpose=Business", label: "Business loan" },
-    ],
-  },
-  {
-    title: "Tools",
-    links: [
-      { href: "/#emi-calculator", label: "EMI calculator" },
-      { href: "/rates", label: "Rates & charges" },
+      { href: "/screen", label: "Screen an application" },
+      { href: "/apply", label: "Apply for review" },
       { href: "/status", label: "Track application" },
-      { href: "/#eligibility", label: "Eligibility" },
     ],
   },
   {
-    title: "Company",
+    title: "The project",
     links: [
-      { href: "/about", label: "About LendWise" },
-      { href: "/how-it-works", label: "How we decide" },
-      { href: "/faq", label: "Help centre" },
+      { href: "/how-it-works", label: "How it works" },
+      { href: "/results", label: "Results and audit" },
+      { href: "/about", label: "About the team" },
+      { href: PROJECT.repo, label: "Source code" },
+    ],
+  },
+  {
+    title: "Help",
+    links: [
+      { href: "/faq", label: "FAQ" },
       { href: "/contact", label: "Contact us" },
+      { href: "/admin/login", label: "Officer login" },
     ],
   },
   {
@@ -39,7 +36,6 @@ const COLUMNS = [
     links: [
       { href: "/privacy", label: "Privacy policy" },
       { href: "/terms", label: "Terms of use" },
-      { href: "/admin/login", label: "Officer login" },
     ],
   },
 ];
@@ -52,13 +48,11 @@ export function SiteFooter() {
       <div className="container-page grid gap-10 py-12 md:grid-cols-[1.3fr_repeat(4,1fr)]">
         <div className="max-w-xs space-y-4">
           <Logo light />
-          <p className="text-sm leading-relaxed">Online loan applications with fast, explained decisions.</p>
-          <p className="text-sm">
-            Customer support
-            <br />
-            <Link href="/contact" className="text-white hover:underline">Contact form</Link>
-            <br />
-            <span className="text-xs text-stone-400">Mon–Sat, 9:30 am – 6:30 pm IST</span>
+          <p className="text-sm leading-relaxed">
+            Loan eligibility screening and charge-off risk prediction using machine learning.
+          </p>
+          <p className="text-xs leading-relaxed text-stone-400">
+            B.Tech project, {PROJECT.department}, {PROJECT.college}.
           </p>
         </div>
         {COLUMNS.map((c) => (
@@ -81,11 +75,11 @@ export function SiteFooter() {
           <p className="font-semibold text-stone-200">Important information</p>
           <p>{DISCLAIMER}</p>
           <p>
-            LendWise is not a bank or a non-banking financial company, is not registered with the Reserve Bank of India, and does not disburse loans.
-            Interest rates, charges and EMIs shown are indicative. Grievances can be raised through the{" "}
-            <Link href="/contact" className="text-stone-200 underline">contact form</Link> and are acknowledged within two business days.
+            LendWise is not a lender and does not pay out loans. The models were trained on US LendingClub data and use the US FICO
+            score, so they would need retraining on local bureau data (for example CIBIL scores) before any use in India. Questions can be
+            sent through the <Link href="/contact" className="text-stone-200 underline">contact form</Link>.
           </p>
-          <p className="pt-2 text-stone-400">© {new Date().getFullYear()} LendWise. All rights reserved.</p>
+          <p className="pt-2 text-stone-400">© {new Date().getFullYear()} LendWise project team.</p>
         </div>
       </div>
     </footer>

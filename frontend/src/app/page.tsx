@@ -1,21 +1,13 @@
 import Link from "next/link";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check, Gauge, ScanSearch, ShieldCheck, Split, X } from "lucide-react";
 import { ButtonLink } from "@/components/site/button-link";
-import { EmiCalculator } from "@/components/home/emi-calculator";
 import { FaqList } from "@/components/site/faq-list";
 import { getMetadataUncachedOnFailure } from "@/lib/backend";
 import { FAQS } from "@/lib/faq";
-import { formatNumber, formatPercent } from "@/lib/format";
-import { charges, DOCUMENTS, ELIGIBILITY, PRODUCTS } from "@/lib/products";
+import { formatAuc, formatNumber, formatPct, formatPercent } from "@/lib/format";
+import type { Acceptance } from "@/lib/types";
 
 export const revalidate = 300;
-
-const STEPS = [
-  { title: "Apply online", text: "Five short sections covering your details, work, residence and the loan you need. About three minutes." },
-  { title: "Risk assessment", text: "Your profile is converted into 414 model features and scored by a Random Forest risk model." },
-  { title: "Officer review", text: "A loan officer reviews the assessment and approves, declines or asks you for more information." },
-  { title: "Decision", text: "You’re emailed the decision and can download your letter and track your application any time." },
-];
 
 function SectionHeading({ title, text, action, id }: { title: string; text?: string; action?: React.ReactNode; id?: string }) {
   return (
@@ -29,153 +21,158 @@ function SectionHeading({ title, text, action, id }: { title: string; text?: str
   );
 }
 
+const STEPS = [
+  { title: "Validate", text: "Each value must be a proper number inside its range. One clear error is shown and nothing is scored if not." },
+  { title: "Eligibility", text: "A score from 0 to 100 for how closely the application resembles ones LendingClub accepted. Below 40 is rejected." },
+  { title: "Charge-off risk", text: "The probability a similar 36-month loan is not repaid, turned into an expected loss with a 50.3% loss severity." },
+  { title: "Range guard", text: "Inputs outside the training range, or unusual combinations, are sent to a reviewer instead of being approved." },
+  { title: "Decision", text: "Approve, review or reject. If not approved, smaller amounts are tried in $500 steps for a counter-offer." },
+];
+
 export default async function HomePage() {
   const md = await getMetadataUncachedOnFailure();
-  const rate = md?.interest_rate ?? 10.5;
-  const accuracy = md ? formatPercent(md.metrics.accuracy) : "89.3%";
+  const e = md?.metrics.eligibility;
+  const c = md?.metrics.chargeoff;
+  const acc = md && "summary" in md.acceptance ? (md.acceptance as Acceptance).summary : null;
+  const latency = md && "checks" in md.acceptance ? (md.acceptance as Acceptance).checks.find((x) => x.name.startsWith("median response time"))?.detail : null;
+  const t = md?.thresholds;
 
   return (
     <>
       {/* Hero */}
       <section className="border-b border-stone-200 bg-[linear-gradient(180deg,#F8F5EE_0%,#FFFFFF_100%)]">
-        <div className="container-page grid items-start gap-10 py-12 md:py-16 lg:grid-cols-[1.15fr_1fr] lg:gap-16">
-          <div className="lg:pt-6">
-            <p className="text-sm font-medium text-brand">Personal, home, vehicle, education and business loans</p>
+        <div className="container-page grid items-center gap-10 py-12 md:py-16 lg:grid-cols-[1.15fr_1fr] lg:gap-16">
+          <div>
+            <p className="text-sm font-medium text-brand">Loan eligibility screening and charge-off risk prediction</p>
             <h1 className="mt-3 text-[2.25rem] font-semibold leading-[1.15] text-navy sm:text-5xl">
-              Loans up to ₹1 crore, assessed in under a minute
+              Screen a loan application from three numbers
             </h1>
             <p className="mt-5 max-w-xl text-lg leading-relaxed text-stone-600">
-              Apply online in about three minutes. A risk model trained on 2.5 lakh past applications assesses your profile instantly,
-              and a loan officer makes the final decision, with the reasons explained.
+              Enter the loan amount, FICO score and debt-to-income ratio. Two machine learning models trained on public LendingClub data
+              tell you how the application fits the lender&apos;s policy and how likely it is to be repaid. A human reviewer makes the final
+              call.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
-              <ButtonLink href="/apply" variant="brand" size="lg">
-                Apply now <ArrowRight aria-hidden />
+              <ButtonLink href="/screen" variant="brand" size="lg">
+                Screen an application <ArrowRight aria-hidden />
               </ButtonLink>
-              <ButtonLink href="#eligibility" variant="outline" size="lg">
-                Check eligibility
+              <ButtonLink href="/how-it-works" variant="outline" size="lg">
+                How it works
               </ButtonLink>
             </div>
-
-            <dl className="mt-10 grid grid-cols-2 border-y border-stone-200 sm:grid-cols-4">
-              {[
-                ["Interest rate", `From ${rate}% p.a.*`],
-                ["Loan amount", "Up to ₹1 crore"],
-                ["Tenure", "6 – 360 months"],
-                ["Processing fee", "Nil*"],
-              ].map(([k, v], i) => (
-                <div key={k} className={`py-4 ${i % 2 === 1 ? "pl-4" : ""} ${i > 0 ? "sm:border-l sm:border-stone-200 sm:pl-4" : ""}`}>
-                  <dt className="text-xs text-stone-500">{k}</dt>
-                  <dd className="mt-1 text-base font-semibold text-navy">{v}</dd>
-                </div>
-              ))}
-            </dl>
-            <p className="mt-3 text-xs text-stone-500">
-              *Indicative terms. See{" "}
-              <Link href="/rates" className="underline hover:text-navy">
-                rates &amp; charges
-              </Link>
-              .
+            <p className="mt-4 text-sm text-stone-500">
+              Want an officer&apos;s decision instead? <Link href="/apply" className="text-brand underline">Submit an application</Link>.
             </p>
           </div>
 
-          <EmiCalculator defaultRate={rate} />
+          <div className="rounded-lg border border-stone-200 bg-white p-6 shadow-sm">
+            <p className="text-xs font-semibold tracking-wide text-stone-500 uppercase">Example result</p>
+            <dl className="mt-4 grid grid-cols-3 gap-3 text-sm">
+              {[
+                ["Loan amount", "$8,000"],
+                ["FICO score", "760"],
+                ["DTI", "8%"],
+              ].map(([k, v]) => (
+                <div key={k} className="rounded-md bg-stone-50 p-3">
+                  <dt className="text-xs text-stone-500">{k}</dt>
+                  <dd className="mt-0.5 font-semibold text-navy tabular-nums">{v}</dd>
+                </div>
+              ))}
+            </dl>
+            <div className="mt-4 space-y-3">
+              <div className="flex items-center justify-between rounded-md border border-stone-200 p-3">
+                <span className="flex items-center gap-2 text-sm text-stone-700"><ScanSearch className="size-4 text-brand" aria-hidden /> Eligibility tier</span>
+                <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-200">Likely</span>
+              </div>
+              <div className="flex items-center justify-between rounded-md border border-stone-200 p-3">
+                <span className="flex items-center gap-2 text-sm text-stone-700"><Gauge className="size-4 text-brand" aria-hidden /> Risk tier</span>
+                <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-200">Low risk</span>
+              </div>
+              <div className="flex items-center justify-between rounded-md border border-emerald-200 bg-emerald-50 p-3">
+                <span className="flex items-center gap-2 text-sm font-medium text-emerald-900"><Check className="size-4" aria-hidden /> Decision</span>
+                <span className="text-sm font-semibold text-emerald-900">Approve</span>
+              </div>
+            </div>
+            <ButtonLink href="/screen?loan=8000&fico=760&dti=8" variant="outline" className="mt-4 w-full">
+              Try it with these values
+            </ButtonLink>
+          </div>
         </div>
       </section>
 
       {/* Key figures */}
-      <section aria-label="Key figures" className="border-b border-stone-200 bg-white">
-        <div className="container-page grid grid-cols-2 md:grid-cols-4 md:divide-x md:divide-stone-200">
-          {[
-            [accuracy, "model accuracy on 50,400 held-out applications"],
-            [md ? formatNumber(md.training_rows) : "2,52,000", "historical applications used to train the model"],
-            ["Under 1 min", "for the risk assessment after you submit"],
-            ["No documents", "needed to receive a decision online"],
-          ].map(([v, k]) => (
-            <div key={k} className="py-6 md:px-6 md:first:pl-0">
-              <p className="text-2xl font-semibold text-navy tabular-nums">{v}</p>
-              <p className="mt-1 text-sm text-stone-600">{k}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+      {md && e && c && (
+        <section aria-label="Key figures" className="border-b border-stone-200 bg-white">
+          <div className="container-page grid grid-cols-2 md:grid-cols-4 md:divide-x md:divide-stone-200">
+            {[
+              [formatAuc(e.roc_auc), `eligibility AUC on ${formatNumber(e.test_rows)} held-out 2016 applications`],
+              [formatAuc(c.roc_auc), `charge-off AUC on ${formatNumber(c.test_rows)} loans from 2015, a later year`],
+              [`${formatPct(c.mean_predicted)} vs ${formatPct(c.mean_observed)}`, "predicted vs actual default rate in 2015"],
+              [
+                acc ? String(acc.passed) : "117",
+                acc ? `automated acceptance checks passed (${acc.failed} failed, ${acc.warnings} warning${acc.warnings === 1 ? "" : "s"})` : "automated acceptance checks passed",
+              ],
+            ].map(([v, k]) => (
+              <div key={k} className="py-6 md:px-6 md:first:pl-0">
+                <p className="text-2xl font-semibold text-navy tabular-nums">{v}</p>
+                <p className="mt-1 text-sm text-stone-600">{k}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
-      {/* Products */}
-      <section id="products" className="scroll-mt-28 py-16" aria-labelledby="products-heading">
+      {/* Two questions */}
+      <section className="py-16" aria-labelledby="two-heading">
         <div className="container-page">
           <SectionHeading
-            id="products-heading"
-            title="Choose a loan"
-            text="Every loan is assessed on your applicant profile. The purpose is recorded with your application but does not change the decision."
-            action={
-              <Link href="/rates" className="text-sm font-medium text-brand hover:underline">
-                Rates &amp; charges →
-              </Link>
-            }
+            id="two-heading"
+            title="Two questions, two models"
+            text="&quot;Will this loan be approved?&quot; is really two questions. One can be learned from accepted and rejected applications. The other only from loans that were actually funded, because nobody knows whether a rejected applicant would have repaid."
           />
-          <ul className="divide-y divide-stone-200 md:hidden">
-            {PRODUCTS.map((p) => (
-              <li key={p.purpose} className="py-5">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h3 className="font-semibold text-navy">{p.name}</h3>
-                    <p className="mt-0.5 text-sm text-stone-600">{p.use}</p>
-                  </div>
-                  <ButtonLink href={`/apply?purpose=${p.purpose}`} variant="outline" size="sm" aria-label={`Apply for a ${p.name.toLowerCase()}`}>
-                    Apply
-                  </ButtonLink>
-                </div>
-                <dl className="mt-3 grid grid-cols-3 gap-2 text-xs">
-                  <div>
-                    <dt className="text-stone-500">Amount</dt>
-                    <dd className="mt-0.5 font-medium text-stone-800">{p.amount}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-stone-500">Tenure</dt>
-                    <dd className="mt-0.5 font-medium text-stone-800">{p.tenure}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-stone-500">Rate</dt>
-                    <dd className="mt-0.5 font-medium text-stone-800">From {rate}% p.a.</dd>
-                  </div>
-                </dl>
-              </li>
+          <div className="mt-8 grid gap-6 md:grid-cols-2">
+            {[
+              {
+                icon: Split,
+                title: "Eligibility model",
+                q: "Does the application look like the ones LendingClub accepted?",
+                points: [
+                  "Trained on 100,000 accepted and 100,000 rejected applications from 2016",
+                  "Score from 0 to 100, tiers Likely (75+), Borderline (40 to 75) and Unlikely (below 40)",
+                  e ? `AUC ${formatAuc(e.roc_auc)}, agrees with the lender's rule on ${formatPercent(e.rule_agreement)} of applications` : "Agrees with the lender's own screening rule",
+                ],
+              },
+              {
+                icon: Gauge,
+                title: "Charge-off model",
+                q: "If the loan is funded, how likely is it to be charged off?",
+                points: [
+                  "Trained on 36-month loans issued 2012 to 2014, tested on 2015",
+                  "Calibrated probability, tiers Low (up to 12%), Moderate (12 to 22%) and High (above 22%)",
+                  c ? `AUC ${formatAuc(c.roc_auc)}, no risk decile off by more than ${c.max_decile_gap.toFixed(1)} points` : "Probabilities match observed default rates",
+                ],
+              },
+            ].map((m) => (
+              <article key={m.title} className="rounded-lg border border-stone-200 p-6">
+                <span className="flex size-10 items-center justify-center rounded-lg bg-brand-soft text-brand">
+                  <m.icon className="size-5" aria-hidden />
+                </span>
+                <h3 className="mt-4 text-lg font-semibold text-navy">{m.title}</h3>
+                <p className="mt-1 text-stone-700">{m.q}</p>
+                <ul className="mt-4 space-y-2 text-sm text-stone-600">
+                  {m.points.map((p) => (
+                    <li key={p} className="flex gap-2">
+                      <Check className="mt-0.5 size-4 shrink-0 text-emerald-700" aria-hidden /> {p}
+                    </li>
+                  ))}
+                </ul>
+              </article>
             ))}
-          </ul>
-          <div className="relative hidden overflow-x-auto md:block">
-            <table className="w-full text-left text-sm">
-              <caption className="sr-only">Loan products</caption>
-              <thead>
-                <tr className="text-xs text-stone-500">
-                  <th scope="col" className="py-3 pr-4 font-medium">Product</th>
-                  <th scope="col" className="py-3 pr-4 font-medium">Loan amount</th>
-                  <th scope="col" className="py-3 pr-4 font-medium">Tenure</th>
-                  <th scope="col" className="py-3 pr-4 font-medium">Interest rate</th>
-                  <th scope="col" className="py-3">
-                    <span className="sr-only">Apply</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {PRODUCTS.map((p) => (
-                  <tr key={p.purpose} className="border-t border-stone-200 align-top">
-                    <th scope="row" className="py-5 pr-4 font-normal">
-                      <span className="block font-semibold text-navy">{p.name}</span>
-                      <span className="mt-0.5 block text-stone-600">{p.use}</span>
-                    </th>
-                    <td className="whitespace-nowrap py-5 pr-4 text-stone-800">{p.amount}</td>
-                    <td className="whitespace-nowrap py-5 pr-4 text-stone-800">{p.tenure}</td>
-                    <td className="whitespace-nowrap py-5 pr-4 text-stone-800">From {rate}% p.a.</td>
-                    <td className="py-4 text-right">
-                      <ButtonLink href={`/apply?purpose=${p.purpose}`} variant="outline" size="sm" aria-label={`Apply for a ${p.name.toLowerCase()}`}>
-                        Apply
-                      </ButtonLink>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
+          <p className="mt-6 text-sm text-stone-600">
+            Both are histogram gradient boosting models with monotonic constraints and 3-fold sigmoid calibration. A higher FICO score can
+            never make an application look riskier, and a larger loan or higher DTI can never make it look safer.
+          </p>
         </div>
       </section>
 
@@ -184,14 +181,14 @@ export default async function HomePage() {
         <div className="container-page">
           <SectionHeading
             id="process-heading"
-            title="How your application is decided"
+            title="How one application is screened"
             action={
               <Link href="/how-it-works" className="text-sm font-medium text-brand hover:underline">
-                Read the full methodology →
+                Full methodology →
               </Link>
             }
           />
-          <ol className="mt-8 grid gap-8 md:grid-cols-4 md:gap-6">
+          <ol className="mt-8 grid gap-8 md:grid-cols-5 md:gap-6">
             {STEPS.map((s, i) => (
               <li key={s.title} className="border-t-2 border-navy pt-4">
                 <p className="text-sm font-semibold text-brand tabular-nums">Step {i + 1}</p>
@@ -200,107 +197,102 @@ export default async function HomePage() {
               </li>
             ))}
           </ol>
+          {t && (
+            <div className="mt-10 overflow-x-auto">
+              <table className="w-full min-w-[36rem] text-left text-sm">
+                <caption className="sr-only">Decision rules</caption>
+                <thead className="text-xs text-stone-500">
+                  <tr>
+                    <th scope="col" className="py-2 pr-4 font-medium">Decision</th>
+                    <th scope="col" className="py-2 font-medium">Rule</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-t border-stone-200">
+                    <th scope="row" className="py-3 pr-4 font-semibold text-rose-800">Reject</th>
+                    <td className="py-3 text-stone-700">
+                      Eligibility below {t.reject_eligibility}, or expected loss above {t.reject_el}% (default probability above {t.reject_pd}%)
+                    </td>
+                  </tr>
+                  <tr className="border-t border-stone-200">
+                    <th scope="row" className="py-3 pr-4 font-semibold text-emerald-800">Approve</th>
+                    <td className="py-3 text-stone-700">
+                      Eligibility {t.approve_eligibility} or more, and expected loss at most {t.approve_el}% (default probability up to {t.approve_pd}%), and no range-guard flag
+                    </td>
+                  </tr>
+                  <tr className="border-t border-stone-200">
+                    <th scope="row" className="py-3 pr-4 font-semibold text-amber-800">Review</th>
+                    <td className="py-3 text-stone-700">Everything else, including every flagged case</td>
+                  </tr>
+                </tbody>
+              </table>
+              <p className="mt-2 text-xs text-stone-500">These thresholds are demonstration settings, not regulatory values.</p>
+            </div>
+          )}
         </div>
       </section>
 
-      {/* Eligibility & documents */}
-      <section id="eligibility" className="scroll-mt-28 py-16" aria-labelledby="eligibility-heading">
+      {/* Audit */}
+      <section className="py-16" aria-labelledby="audit-heading">
         <div className="container-page grid gap-12 lg:grid-cols-2">
           <div>
-            <h2 id="eligibility-heading" className="border-b border-stone-200 pb-4 text-2xl font-semibold text-navy">
-              Eligibility
-            </h2>
-            <dl className="divide-y divide-stone-200">
-              {ELIGIBILITY.map(([k, v]) => (
-                <div key={k} className="grid grid-cols-[7.5rem_1fr] gap-4 py-3.5 text-sm">
-                  <dt className="font-medium text-stone-900">{k}</dt>
-                  <dd className="text-stone-600">{v}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-          <div>
-            <h2 className="border-b border-stone-200 pb-4 text-2xl font-semibold text-navy">Documents for disbursal</h2>
-            <dl className="divide-y divide-stone-200">
-              {DOCUMENTS.map(([k, v]) => (
-                <div key={k} className="grid grid-cols-[7.5rem_1fr] gap-4 py-3.5 text-sm">
-                  <dt className="font-medium text-stone-900">{k}</dt>
-                  <dd className="text-stone-600">{v}</dd>
-                </div>
-              ))}
-            </dl>
-            <p className="mt-4 text-sm text-stone-600">You don’t need to upload anything to get a decision. Documents are only needed after approval.</p>
-          </div>
-        </div>
-      </section>
-
-      {/* Rates & charges + security */}
-      <section className="border-t border-stone-200 bg-stone-50 py-16" aria-labelledby="charges-heading">
-        <div className="container-page grid gap-12 lg:grid-cols-[1.2fr_1fr]">
-          <div>
-            <SectionHeading
-              id="charges-heading"
-              title="Rates & charges"
-              action={
-                <Link href="/rates" className="text-sm font-medium text-brand hover:underline">
-                  Full schedule →
-                </Link>
-              }
-            />
-            <table className="w-full text-left text-sm">
-              <caption className="sr-only">Summary of rates and charges</caption>
-              <tbody>
-                {charges(rate)
-                  .slice(0, 5)
-                  .map(([k, v]) => (
-                    <tr key={k} className="border-b border-stone-200">
-                      <th scope="row" className="py-3 pr-4 font-medium text-stone-900">{k}</th>
-                      <td className="py-3 text-stone-700">{v}</td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-            <p className="mt-3 text-xs text-stone-500">All terms are indicative.</p>
-          </div>
-          <div>
-            <h2 className="border-b border-stone-200 pb-4 text-2xl font-semibold text-navy">Security &amp; privacy</h2>
-            <ul className="mt-4 space-y-3 text-sm text-stone-700">
-              {[
-                "All connections are encrypted with TLS and protected by strict security headers.",
-                "Your decision page opens only in the browser you applied from, or with your application ID and email.",
-                "The risk model runs on our servers. Your browser only ever receives the result.",
-                "We never sell or share your data for marketing.",
-              ].map((t) => (
-                <li key={t} className="flex gap-3">
-                  <Check className="mt-0.5 size-4 shrink-0 text-emerald-700" aria-hidden />
-                  {t}
-                </li>
-              ))}
-            </ul>
-            <Link href="/privacy" className="mt-5 inline-block text-sm font-medium text-brand hover:underline">
-              Privacy policy →
+            <h2 id="audit-heading" className="text-2xl font-semibold text-navy md:text-[1.75rem]">Why our first AUC of 0.99 was wrong</h2>
+            <p className="mt-4 leading-relaxed text-stone-600">
+              The first eligibility model scored an AUC of 0.99. Credit screening is never that easy, so we audited it. Employment length on
+              its own separated the two files, because about
+              {md ? ` ${formatPercent(md.data.eligibility.rejected_emp_lt_1y_share, 0)} ` : " 91% "}
+              of rejected 2016 records say &quot;&lt; 1 year&quot;. That is a difference in how the files were recorded, not a fact about the
+              applicants. FICO alone also scored very high, because LendingClub&apos;s screening is close to a fixed rule.
+            </p>
+            <p className="mt-4 leading-relaxed text-stone-600">
+              We rebuilt the system on the three inputs both files record in the same way, added monotonic constraints and calibration, and
+              tested the risk model on a later year. The numbers are lower, and we know where each one comes from.
+            </p>
+            <Link href="/results" className="mt-5 inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline">
+              See the full results and audit <ArrowRight className="size-4" aria-hidden />
             </Link>
+          </div>
+          <div className="grid content-start gap-4 sm:grid-cols-2">
+            <div className="rounded-lg border border-stone-200 p-5">
+              <ShieldCheck className="size-6 text-emerald-700" aria-hidden />
+              <h3 className="mt-3 font-semibold text-navy">What LendWise does</h3>
+              <ul className="mt-3 space-y-2 text-sm text-stone-600">
+                {["Uses only application-time inputs", "Tests risk on a later year", "Keeps probabilities calibrated", "Checks every input before scoring"].map((x) => (
+                  <li key={x} className="flex gap-2">
+                    <Check className="mt-0.5 size-4 shrink-0 text-emerald-700" aria-hidden /> {x}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="rounded-lg border border-stone-200 p-5">
+              <X className="size-6 text-rose-700" aria-hidden />
+              <h3 className="mt-3 font-semibold text-navy">What it does not do</h3>
+              <ul className="mt-3 space-y-2 text-sm text-stone-600">
+                {["Make lending decisions on its own", "Give the real chance of approval", "Judge FICO below 660 reliably", "Work on Indian data without retraining"].map((x) => (
+                  <li key={x} className="flex gap-2">
+                    <X className="mt-0.5 size-4 shrink-0 text-rose-700" aria-hidden /> {x}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            {latency && (
+              <p className="text-sm text-stone-600 sm:col-span-2">
+                Speed: {latency.replace("median", "median response").replace("over 200 requests", "per application")}.
+              </p>
+            )}
           </div>
         </div>
       </section>
 
       {/* FAQ */}
-      <section className="py-16" aria-labelledby="faq-heading">
+      <section className="border-t border-stone-200 bg-stone-50 py-16" aria-labelledby="faq-heading">
         <div className="container-page grid gap-10 lg:grid-cols-[1fr_2fr]">
           <div>
-            <h2 id="faq-heading" className="text-2xl font-semibold text-navy md:text-[1.75rem]">
-              Frequently asked questions
-            </h2>
+            <h2 id="faq-heading" className="text-2xl font-semibold text-navy md:text-[1.75rem]">Frequently asked questions</h2>
             <p className="mt-3 text-stone-600">
-              More answers in the{" "}
-              <Link href="/faq" className="text-brand underline underline-offset-2 hover:text-brand-deep">
-                help centre
-              </Link>
-              , or{" "}
-              <Link href="/contact" className="text-brand underline underline-offset-2 hover:text-brand-deep">
-                contact us
-              </Link>
-              .
+              More in the{" "}
+              <Link href="/faq" className="text-brand underline underline-offset-2 hover:text-brand-deep">FAQ</Link>, or{" "}
+              <Link href="/contact" className="text-brand underline underline-offset-2 hover:text-brand-deep">contact us</Link>.
             </p>
           </div>
           <FaqList items={FAQS.slice(0, 5)} />
@@ -311,15 +303,15 @@ export default async function HomePage() {
       <section className="border-t border-brand-line bg-brand-soft">
         <div className="container-page flex flex-col items-start justify-between gap-6 py-12 md:flex-row md:items-center">
           <div>
-            <h2 className="text-2xl font-semibold text-navy">Find out where you stand in three minutes</h2>
-            <p className="mt-2 text-stone-600">Checking your decision doesn’t commit you to anything.</p>
+            <h2 className="text-2xl font-semibold text-navy">Try it with your own numbers</h2>
+            <p className="mt-2 text-stone-600">Screening takes a few milliseconds, and nothing you type is stored.</p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <ButtonLink href="/apply" variant="brand" size="lg">
-              Start application
+            <ButtonLink href="/screen" variant="brand" size="lg">
+              Screen an application
             </ButtonLink>
-            <ButtonLink href="/status" variant="outline" size="lg">
-              Track application
+            <ButtonLink href="/results" variant="outline" size="lg">
+              See the results
             </ButtonLink>
           </div>
         </div>

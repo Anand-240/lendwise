@@ -25,11 +25,11 @@ export function MobileNav({ open, onOpenChange }: { open: boolean; onOpenChange:
           ))}
         </nav>
         <div className="mt-4 flex flex-col gap-2 px-4">
-          <ButtonLink href="/apply" variant="brand" size="lg" onClick={close}>
-            Apply now
+          <ButtonLink href="/screen" variant="brand" size="lg" onClick={close}>
+            Screen an application
           </ButtonLink>
-          <ButtonLink href="/status" variant="outline" size="lg" onClick={close}>
-            Track application
+          <ButtonLink href="/apply" variant="outline" size="lg" onClick={close}>
+            Apply for review
           </ButtonLink>
         </div>
       </SheetContent>

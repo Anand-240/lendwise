@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import { FlaskConical, ServerCrash } from "lucide-react";
 
-type State = "ok" | "demo" | "down" | null;
+type State = "ok" | "unavailable" | "down" | null;
 
-/** Site-wide banner: shows when the ML model isn't loaded (demo mode) or the API is down. */
+/** Site-wide banner: shows when the models are not loaded or the API is down. */
 export function StatusBanner() {
   const [state, setState] = useState<State>(null);
 
@@ -16,7 +16,7 @@ export function StatusBanner() {
         if (!alive) return;
         if (!r.ok) return setState("down");
         const h = await r.json();
-        setState(h.mode === "demo" ? "demo" : "ok");
+        setState(h.mode === "live" ? "ok" : "unavailable");
       })
       .catch(() => alive && setState("down"));
     return () => {
@@ -24,12 +24,12 @@ export function StatusBanner() {
     };
   }, []);
 
-  if (state === "demo") {
+  if (state === "unavailable") {
     return (
       <div role="status" className="no-print border-b border-amber-200 bg-amber-50 text-amber-900">
         <p className="container-page flex items-center justify-center gap-2 py-2 text-center text-sm font-medium">
           <FlaskConical className="size-4 shrink-0" aria-hidden />
-          Our risk model is temporarily unavailable. Decisions shown now are provisional.
+          The screening models are not loaded right now, so applications cannot be scored. Please try again shortly.
         </p>
       </div>
     );
@@ -39,7 +39,7 @@ export function StatusBanner() {
       <div role="status" className="no-print border-b border-rose-200 bg-rose-50 text-rose-900">
         <p className="container-page flex items-center justify-center gap-2 py-2 text-center text-sm font-medium">
           <ServerCrash className="size-4 shrink-0" aria-hidden />
-          Service temporarily unavailable. Applications can’t be processed right now. Please try again shortly.
+          Service temporarily unavailable. Applications cannot be processed right now. Please try again shortly.
         </p>
       </div>
     );

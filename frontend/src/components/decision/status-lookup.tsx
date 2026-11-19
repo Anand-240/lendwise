@@ -54,7 +54,7 @@ export function StatusLookup({ defaultId, intro }: { defaultId?: string; intro?:
         return setResult(body);
       }
       if (res.status === 404) return setNotFound(true);
-      toast.error(res.status === 503 ? "Service temporarily unavailable" : "Couldn’t check status", { description: body?.error?.message });
+      toast.error(res.status === 503 ? "Service temporarily unavailable" : "Could not check status", { description: body?.error?.message });
     } catch {
       toast.error("Service temporarily unavailable", { description: "Please try again in a few minutes." });
     }
@@ -97,7 +97,7 @@ export function StatusLookup({ defaultId, intro }: { defaultId?: string; intro?:
         </div>
         {notFound && (
           <p role="alert" className="mt-4 rounded-lg bg-rose-50 p-3 text-sm text-rose-800">
-            We couldn’t find an application matching that ID and email. Please check both and try again.
+            We could not find an application matching that ID and email. Please check both and try again.
           </p>
         )}
       </form>

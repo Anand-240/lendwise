@@ -15,7 +15,7 @@ export function ServiceUnavailable({ message }: { message?: string }) {
       </span>
       <h2 className="mt-6 text-xl font-semibold text-navy">Service temporarily unavailable</h2>
       <p className="mt-2 text-sm text-stone-600">
-        {message ?? "We can’t reach the decision service right now. Your information hasn’t been submitted. Please try again in a few minutes."}
+        {message ?? "We cannot reach the screening service right now. Your information has not been submitted. Please try again in a few minutes."}
       </p>
       <Button className="mt-6" onClick={() => start(() => router.refresh())} disabled={pending}>
         <RefreshCw className={pending ? "animate-spin" : undefined} aria-hidden /> Try again

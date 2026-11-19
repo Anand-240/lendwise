@@ -7,7 +7,7 @@ import { appCookieName, backendFetch, BackendUnavailable } from "@/lib/backend";
 import type { ApplicationResult } from "@/lib/types";
 
 export const metadata: Metadata = {
-  title: "Your loan decision",
+  title: "Your application",
   robots: { index: false, follow: false },
 };
 
@@ -33,12 +33,12 @@ export default async function ApplicationPage(props: PageProps<"/application/[id
     <div className="bg-stone-50">
       <div className="container-page py-10 md:py-14">
         {result === "unavailable" ? (
-          <ServiceUnavailable message="We couldn’t load your decision right now. Please try again in a few minutes." />
+          <ServiceUnavailable message="We could not load your application right now. Please try again in a few minutes." />
         ) : result ? (
           <DecisionView result={result} />
         ) : (
           <div className="mx-auto max-w-3xl">
-            <h1 className="text-2xl font-semibold text-navy md:text-3xl">View your decision</h1>
+            <h1 className="text-2xl font-semibold text-navy md:text-3xl">View your application</h1>
             <p className="mt-2 mb-6 text-stone-600">For your privacy, please confirm the email address you applied with.</p>
             <StatusLookup defaultId={/^LW-\d{4}-\d{6}$/.test(applicationId) ? applicationId : undefined} />
           </div>

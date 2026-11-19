@@ -6,7 +6,6 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
-  LabelList,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -14,17 +13,17 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import type { AdminStats, GroupStat } from "@/lib/types";
+import type { AdminStats } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 // Validated with the dataviz palette checker: approved/rejected pass CVD separation (ΔE 10.6).
 // The lighter rejected hue is below 3:1 on white, so every chart pairs it with a legend,
 // direct labels or tooltips, and the applications table is the full table view.
-export const SERIES = { approved: "#047857", rejected: "#FB7185", single: "#8A6417" };
-const AXIS = { stroke: "#A8A29E", fontSize: 12, tickLine: false, axisLine: false } as const;
-const GRID = "#F0EEEC";
+export const SERIES = { approved: "#047857", rejected: "#FB7185", pending: "#D6D3D1", single: "#8A6417" };
+export const AXIS = { stroke: "#A8A29E", fontSize: 12, tickLine: false, axisLine: false } as const;
+export const GRID = "#F0EEEC";
 
-function ChartCard({ title, subtitle, children, action }: { title: string; subtitle?: string; children: React.ReactNode; action?: React.ReactNode }) {
+export function ChartCard({ title, subtitle, children, action }: { title: string; subtitle?: string; children: React.ReactNode; action?: React.ReactNode }) {
   return (
     <section className="rounded-lg bg-white p-5 border border-stone-200" aria-label={title}>
       <div className="mb-4 flex items-start justify-between gap-4">
@@ -39,7 +38,7 @@ function ChartCard({ title, subtitle, children, action }: { title: string; subti
   );
 }
 
-function Legend({ items }: { items: { label: string; color: string }[] }) {
+export function Legend({ items }: { items: { label: string; color: string }[] }) {
   return (
     <ul className="flex flex-wrap gap-4 text-xs text-stone-600">
       {items.map((i) => (
@@ -52,7 +51,7 @@ function Legend({ items }: { items: { label: string; color: string }[] }) {
   );
 }
 
-function TooltipBox({ title, rows }: { title: string; rows: { label: string; value: string; color?: string }[] }) {
+export function TooltipBox({ title, rows }: { title: string; rows: { label: string; value: string; color?: string }[] }) {
   return (
     <div className="rounded-lg bg-white px-3 py-2 text-xs shadow-lg ring-1 ring-stone-200">
       <p className="mb-1 font-semibold text-stone-900">{title}</p>
@@ -66,14 +65,22 @@ function TooltipBox({ title, rows }: { title: string; rows: { label: string; val
   );
 }
 
-const shortDate = (iso: string) => new Date(iso + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+const shortDate = (iso: string) => new Date(iso + "T00:00:00").toLocaleDateString("en-US", { day: "numeric", month: "short" });
 
 export function VolumeChart({ data }: { data: AdminStats["per_day"] }) {
   return (
     <ChartCard
       title="Applications over time"
       subtitle="Last 30 days, by final decision"
-      action={<Legend items={[{ label: "Approved", color: SERIES.approved }, { label: "Rejected", color: SERIES.rejected }]} />}
+      action={
+        <Legend
+          items={[
+            { label: "Approved", color: SERIES.approved },
+            { label: "Rejected", color: SERIES.rejected },
+            { label: "Awaiting review", color: SERIES.pending },
+          ]}
+        />
+      }
     >
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
@@ -90,13 +97,15 @@ export function VolumeChart({ data }: { data: AdminStats["per_day"] }) {
                     rows={[
                       { label: "Approved", value: String(payload[0]?.payload.approved ?? 0), color: SERIES.approved },
                       { label: "Rejected", value: String(payload[0]?.payload.rejected ?? 0), color: SERIES.rejected },
+                      { label: "Awaiting review", value: String(payload[0]?.payload.pending ?? 0), color: SERIES.pending },
                     ]}
                   />
                 ) : null
               }
             />
             <Bar isAnimationActive={false} dataKey="approved" stackId="d" fill={SERIES.approved} stroke="#fff" strokeWidth={1} />
-            <Bar isAnimationActive={false} dataKey="rejected" stackId="d" fill={SERIES.rejected} stroke="#fff" strokeWidth={1} radius={[4, 4, 0, 0]} />
+            <Bar isAnimationActive={false} dataKey="rejected" stackId="d" fill={SERIES.rejected} stroke="#fff" strokeWidth={1} />
+            <Bar isAnimationActive={false} dataKey="pending" stackId="d" fill={SERIES.pending} stroke="#fff" strokeWidth={1} radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -111,10 +120,10 @@ export function DecisionDonut({ approved, rejected }: { approved: number; reject
     { name: "Rejected", value: rejected, color: SERIES.rejected },
   ];
   return (
-    <ChartCard title="Approved vs rejected" subtitle="All applications, final decision">
+    <ChartCard title="Approved vs rejected" subtitle="Applications an officer has decided">
       <div className="relative h-52">
         {total === 0 ? (
-          <p className="flex h-full items-center justify-center text-sm text-stone-500">No applications yet</p>
+          <p className="flex h-full items-center justify-center text-sm text-stone-500">No decisions yet</p>
         ) : (
           <>
             <ResponsiveContainer width="100%" height="100%">
@@ -138,7 +147,7 @@ export function DecisionDonut({ approved, rejected }: { approved: number; reject
             </ResponsiveContainer>
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
               <span className="text-2xl font-semibold text-navy tabular-nums">{total}</span>
-              <span className="text-xs text-stone-500">applications</span>
+              <span className="text-xs text-stone-500">decided</span>
             </div>
           </>
         )}
@@ -160,12 +169,12 @@ export function DecisionDonut({ approved, rejected }: { approved: number; reject
 
 export function ProbabilityHistogram({ data }: { data: AdminStats["probability_histogram"] }) {
   return (
-    <ChartCard title="Default-probability distribution" subtitle="Applications per 10% band">
+    <ChartCard title="Charge-off risk distribution" subtitle="Applications per default-probability band">
       <div className="h-56">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 16, right: 4, left: -20, bottom: 0 }} barCategoryGap={2}>
             <CartesianGrid vertical={false} stroke={GRID} />
-            <XAxis dataKey="bucket" tickFormatter={(b: string) => b.split("–")[0] + "%"} {...AXIS} />
+            <XAxis dataKey="bucket" tickFormatter={(b: string) => (b.includes(" to ") ? `${b.split(" to ")[0]}%` : b)} {...AXIS} />
             <YAxis allowDecimals={false} {...AXIS} />
             <Tooltip
               cursor={{ fill: "rgba(148,163,184,0.12)" }}
@@ -179,70 +188,65 @@ export function ProbabilityHistogram({ data }: { data: AdminStats["probability_h
           </BarChart>
         </ResponsiveContainer>
       </div>
-      <p className="mt-2 text-xs text-stone-500">Bands ≥ 50% are classed High risk; 30–50% Moderate.</p>
+      <p className="mt-2 text-xs text-stone-500">Up to 12% is Low risk, 12% to 22% Moderate and above 22% High.</p>
     </ChartCard>
   );
 }
 
-export function ApprovalRateBars({ profession, state }: { profession: GroupStat[]; state: GroupStat[] }) {
-  const [tab, setTab] = useState<"profession" | "state">("profession");
-  const rows = (tab === "profession" ? profession : state).map((g) => ({ ...g, pct: Math.round(g.approval_rate * 100) }));
+const TIER_COLORS: Record<string, string> = {
+  APPROVE: "#047857", REVIEW: "#D97706", REJECT: "#FB7185",
+  Likely: "#047857", Borderline: "#D97706", Unlikely: "#FB7185",
+  Low: "#047857", Moderate: "#D97706", High: "#FB7185",
+};
+const TIER_LABEL: Record<string, string> = { APPROVE: "Approve", REVIEW: "Review", REJECT: "Reject" };
+
+export function TierBars({ stats }: { stats: AdminStats }) {
+  const tabs = {
+    recommendation: { label: "Recommendation", data: stats.by_recommendation },
+    eligibility: { label: "Eligibility tier", data: stats.by_eligibility_tier },
+    risk: { label: "Risk tier", data: stats.by_risk_tier },
+  } as const;
+  const [tab, setTab] = useState<keyof typeof tabs>("recommendation");
+  const total = Object.values(tabs[tab].data).reduce((a, b) => a + b, 0);
+  const rows = Object.entries(tabs[tab].data).map(([k, v]) => ({ key: k, label: TIER_LABEL[k] ?? k, count: v, pct: total ? Math.round((v / total) * 100) : 0 }));
   return (
     <ChartCard
-      title="Approval rate by segment"
-      subtitle="Top 10 by application volume"
+      title="Screening results"
+      subtitle="What LendWise recommended for every application"
       action={
-        <div role="tablist" aria-label="Segment" className="flex rounded-lg bg-stone-100 p-0.5 text-xs">
-          {(["profession", "state"] as const).map((t) => (
+        <div role="tablist" aria-label="Breakdown" className="flex rounded-lg bg-stone-100 p-0.5 text-xs">
+          {(Object.keys(tabs) as (keyof typeof tabs)[]).map((t) => (
             <button
               key={t}
               role="tab"
               aria-selected={tab === t}
               onClick={() => setTab(t)}
-              className={cn("rounded-md px-3 py-1 font-medium capitalize", tab === t ? "bg-white text-navy shadow-sm" : "text-stone-600")}
+              className={cn("rounded-md px-3 py-1 font-medium", tab === t ? "bg-white text-navy shadow-sm" : "text-stone-600")}
             >
-              {t}
+              {tabs[t].label}
             </button>
           ))}
         </div>
       }
     >
-      {rows.length === 0 ? (
-        <p className="py-16 text-center text-sm text-stone-500">No data yet</p>
+      {total === 0 ? (
+        <p className="py-16 text-center text-sm text-stone-500">No applications yet</p>
       ) : (
-        <div style={{ height: Math.max(160, rows.length * 30 + 20) }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={rows} layout="vertical" margin={{ top: 0, right: 40, left: 0, bottom: 0 }} barCategoryGap={4}>
-              <XAxis type="number" domain={[0, 100]} hide />
-              <YAxis
-                type="category"
-                dataKey="label"
-                width={150}
-                interval={0}
-                {...AXIS}
-                tick={{ fill: "#57534E", fontSize: 12 }}
-                tickFormatter={(v: string) => (v.length > 18 ? `${v.slice(0, 17)}…` : v)}
-              />
-              <Tooltip
-                cursor={{ fill: "rgba(148,163,184,0.12)" }}
-                content={({ active, payload }) =>
-                  active && payload?.length ? (
-                    <TooltipBox
-                      title={payload[0].payload.label}
-                      rows={[
-                        { label: "Approval rate", value: `${payload[0].payload.pct}%` },
-                        { label: "Applications", value: String(payload[0].payload.total) },
-                      ]}
-                    />
-                  ) : null
-                }
-              />
-              <Bar isAnimationActive={false} dataKey="pct" fill={SERIES.single} radius={[0, 4, 4, 0]} background={{ fill: "#F5F5F4", radius: 4 }}>
-                <LabelList dataKey="pct" position="right" formatter={(v) => `${v}%`} style={{ fill: "#44403C", fontSize: 12 }} />
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        <ul className="space-y-4 py-2">
+          {rows.map((r) => (
+            <li key={r.key}>
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium text-stone-800">{r.label}</span>
+                <span className="text-stone-600 tabular-nums">
+                  {r.count} · {r.pct}%
+                </span>
+              </div>
+              <div className="mt-1.5 h-2.5 rounded-full bg-stone-100">
+                <div className="h-2.5 rounded-full" style={{ width: `${r.pct}%`, background: TIER_COLORS[r.key] }} />
+              </div>
+            </li>
+          ))}
+        </ul>
       )}
     </ChartCard>
   );

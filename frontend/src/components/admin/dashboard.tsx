@@ -12,7 +12,6 @@ import {
   ChevronRight,
   Download,
   FileText,
-  FlaskConical,
   Gauge as GaugeIcon,
   Inbox,
   Loader2,
@@ -24,6 +23,7 @@ import {
   Trash2,
   RefreshCw,
   Search,
+  ShieldAlert,
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -33,16 +33,27 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Logo } from "@/components/site/logo";
-import { ApprovalRateBars, DecisionDonut, ProbabilityHistogram, VolumeChart } from "./charts";
-import { formatDate, formatINR, formatLakhCrore, formatPercent } from "@/lib/format";
-import type { AdminApplication, AdminEmail, AdminEmailPage, AdminPage, AdminStats, ContactPage, FinalDecision, RiskBand } from "@/lib/types";
-import { ThreadList } from "@/components/decision/pending-view";
+import { DecisionDonut, ProbabilityHistogram, TierBars, VolumeChart } from "./charts";
+import { formatDate, formatPct, formatPercent, formatUSD } from "@/lib/format";
+import type { AdminApplication, AdminEmail, AdminEmailPage, AdminPage, AdminStats, ContactPage, FinalDecision } from "@/lib/types";
+import { ThreadList } from "@/components/decision/thread";
+import { DECISION_COPY, RecommendationBadge, TierBadge } from "@/components/screen/screen-result";
 import { EmailPreview, EmailStatusBadge, type PreviewEmail } from "@/components/site/email-preview";
 import { cn } from "@/lib/utils";
 
-type SortKey = "created_at" | "default_probability" | "loan_amount" | "income" | "full_name";
-type Filters = { q: string; decision: string; risk_band: string; status: string; date_from: string; date_to: string };
-const EMPTY: Filters = { q: "", decision: "", risk_band: "", status: "", date_from: "", date_to: "" };
+type SortKey = "created_at" | "default_probability" | "eligibility_score" | "loan_amount" | "fico" | "full_name";
+type Filters = {
+  q: string;
+  decision: string;
+  recommendation: string;
+  eligibility_tier: string;
+  risk_tier: string;
+  status: string;
+  flagged: string;
+  date_from: string;
+  date_to: string;
+};
+const EMPTY: Filters = { q: "", decision: "", recommendation: "", eligibility_tier: "", risk_tier: "", status: "", flagged: "", date_from: "", date_to: "" };
 const PAGE_SIZE = 15;
 
 const selectCls =
@@ -69,12 +80,6 @@ export function DecisionBadge({ decision, overridden }: { decision: FinalDecisio
       {overridden && <span className="font-normal">· override</span>}
     </span>
   );
-}
-
-function BandBadge({ band }: { band: RiskBand }) {
-  const cls =
-    band === "Low" ? "bg-emerald-50 text-emerald-800" : band === "Moderate" ? "bg-amber-50 text-amber-800" : "bg-rose-50 text-rose-800";
-  return <span className={cn("rounded-md px-2 py-0.5 text-xs font-medium", cls)}>{band}</span>;
 }
 
 function useAuthedFetch() {
@@ -184,7 +189,7 @@ export function AdminDashboard() {
       if (!res.ok) throw new Error();
       setSelected(await res.json());
     } catch (e) {
-      if ((e as Error).message !== "unauthorized") toast.error("Couldn’t open that application.");
+      if ((e as Error).message !== "unauthorized") toast.error("Could not open that application.");
     }
   }
 
@@ -239,7 +244,7 @@ export function AdminDashboard() {
       <div id="dashboard" className="container-page space-y-6 py-8">
         <div>
           <h1 className="text-2xl font-semibold text-navy">Applications dashboard</h1>
-          <p className="text-sm text-stone-600">Monitor model decisions, review applications and record overrides.</p>
+          <p className="text-sm text-stone-600">Every application arrives with its screening result. You make the final decision.</p>
         </div>
 
         {error && (
@@ -252,10 +257,10 @@ export function AdminDashboard() {
         <section aria-label="Key metrics" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {stats ? (
             [
-              { label: "Total applications", value: stats.total.toLocaleString("en-IN"), sub: `${stats.overridden} decided against the model`, icon: FileText, tone: "text-brand bg-brand-soft" },
-              { label: "Awaiting review", value: stats.awaiting_review.toLocaleString("en-IN"), sub: `${stats.info_requested} waiting on the applicant`, icon: Clock3, tone: "text-amber-800 bg-amber-50" },
+              { label: "Total applications", value: stats.total.toLocaleString("en-US"), sub: `${stats.overridden} decided against the recommendation`, icon: FileText, tone: "text-brand bg-brand-soft" },
+              { label: "Awaiting review", value: stats.awaiting_review.toLocaleString("en-US"), sub: `${stats.info_requested} waiting on the applicant · ${stats.flagged} flagged`, icon: Clock3, tone: "text-amber-800 bg-amber-50" },
               { label: "Approval rate", value: formatPercent(stats.approval_rate), sub: `${stats.approved} approved · ${stats.rejected} rejected`, icon: CheckCircle2, tone: "text-emerald-700 bg-emerald-50" },
-              { label: "Avg. default probability", value: formatPercent(stats.avg_default_probability), sub: `Low ${stats.by_risk_band.Low} · Mod ${stats.by_risk_band.Moderate} · High ${stats.by_risk_band.High}`, icon: GaugeIcon, tone: "text-amber-700 bg-amber-50" },
+              { label: "Avg. charge-off risk", value: formatPct(stats.avg_default_probability), sub: `Low ${stats.by_risk_tier.Low} · Moderate ${stats.by_risk_tier.Moderate} · High ${stats.by_risk_tier.High}`, icon: GaugeIcon, tone: "text-amber-700 bg-amber-50" },
             ].map((k) => (
               <div key={k.label} className="rounded-lg bg-white p-5 border border-stone-200">
                 <div className="flex items-center justify-between">
@@ -272,19 +277,13 @@ export function AdminDashboard() {
             Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-32 rounded-lg" />)
           )}
         </section>
-        {stats && stats.demo_count > 0 && (
-          <p className="flex items-center gap-2 text-xs text-amber-800">
-            <FlaskConical className="size-4" aria-hidden /> {stats.demo_count} application(s) were decided while the risk model was unavailable (provisional decisions).
-          </p>
-        )}
-
         {/* Charts */}
         {stats ? (
           <div className="grid gap-4 lg:grid-cols-3">
             <div className="lg:col-span-2"><VolumeChart data={stats.per_day} /></div>
             <DecisionDonut approved={stats.approved} rejected={stats.rejected} />
             <ProbabilityHistogram data={stats.probability_histogram} />
-            <div className="lg:col-span-2"><ApprovalRateBars profession={stats.by_profession} state={stats.by_state} /></div>
+            <div className="lg:col-span-2"><TierBars stats={stats} /></div>
           </div>
         ) : (
           <div className="grid gap-4 lg:grid-cols-3">
@@ -298,7 +297,7 @@ export function AdminDashboard() {
           <div className="flex flex-col gap-4 border-b border-stone-100 p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 id="apps-heading" className="text-base font-semibold text-navy">
-                Applications {page && <span className="font-normal text-stone-500">({page.total.toLocaleString("en-IN")})</span>}
+                Applications {page && <span className="font-normal text-stone-500">({page.total.toLocaleString("en-US")})</span>}
               </h2>
               <a href={exportHref} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-white px-3 text-sm font-medium hover:bg-stone-50" download>
                 <Download className="size-4" aria-hidden /> Export CSV
@@ -315,11 +314,28 @@ export function AdminDashboard() {
                 <option value="APPROVED">Approved</option>
                 <option value="REJECTED">Rejected</option>
               </select>
-              <select aria-label="Filter by risk band" className={selectCls} value={filters.risk_band} onChange={(e) => setFilter("risk_band", e.target.value)}>
-                <option value="">All risk bands</option>
+              <select aria-label="Filter by recommendation" className={selectCls} value={filters.recommendation} onChange={(e) => setFilter("recommendation", e.target.value)}>
+                <option value="">All recommendations</option>
+                <option value="APPROVE">Approve</option>
+                <option value="REVIEW">Review</option>
+                <option value="REJECT">Reject</option>
+              </select>
+              <select aria-label="Filter by eligibility tier" className={selectCls} value={filters.eligibility_tier} onChange={(e) => setFilter("eligibility_tier", e.target.value)}>
+                <option value="">All eligibility tiers</option>
+                <option>Likely</option>
+                <option>Borderline</option>
+                <option>Unlikely</option>
+              </select>
+              <select aria-label="Filter by risk tier" className={selectCls} value={filters.risk_tier} onChange={(e) => setFilter("risk_tier", e.target.value)}>
+                <option value="">All risk tiers</option>
                 <option>Low</option>
                 <option>Moderate</option>
                 <option>High</option>
+              </select>
+              <select aria-label="Filter by range guard" className={selectCls} value={filters.flagged} onChange={(e) => setFilter("flagged", e.target.value)}>
+                <option value="">Flagged or not</option>
+                <option value="true">Flagged by range guard</option>
+                <option value="false">Not flagged</option>
               </select>
               <select aria-label="Filter by status" className={selectCls} value={filters.status} onChange={(e) => setFilter("status", e.target.value)}>
                 <option value="">All statuses</option>
@@ -345,16 +361,17 @@ export function AdminDashboard() {
           </div>
 
           <div className="relative overflow-x-auto">
-            <table className="w-full min-w-[56rem] text-left text-sm">
+            <table className="w-full min-w-[66rem] text-left text-sm">
               <thead className="bg-stone-50 text-xs text-stone-500">
                 <tr>
                   <th scope="col" className="px-4 py-3 font-medium">Application</th>
                   <SortHeader sort={sort} order={order} onSort={toggleSort} k="full_name">Applicant</SortHeader>
                   <SortHeader sort={sort} order={order} onSort={toggleSort} k="created_at">Date</SortHeader>
                   <SortHeader sort={sort} order={order} onSort={toggleSort} k="loan_amount">Loan</SortHeader>
-                  <SortHeader sort={sort} order={order} onSort={toggleSort} k="default_probability">Default prob.</SortHeader>
-                  <th scope="col" className="px-4 py-3 font-medium">Risk band</th>
-                  <th scope="col" className="px-4 py-3 font-medium">Model</th>
+                  <SortHeader sort={sort} order={order} onSort={toggleSort} k="fico">FICO / DTI</SortHeader>
+                  <SortHeader sort={sort} order={order} onSort={toggleSort} k="eligibility_score">Eligibility</SortHeader>
+                  <SortHeader sort={sort} order={order} onSort={toggleSort} k="default_probability">Charge-off risk</SortHeader>
+                  <th scope="col" className="px-4 py-3 font-medium">Recommendation</th>
                   <th scope="col" className="px-4 py-3 font-medium">Decision</th>
                   <th scope="col" className="px-4 py-3 font-medium">Status</th>
                 </tr>
@@ -363,7 +380,7 @@ export function AdminDashboard() {
                 {loading && !page
                   ? Array.from({ length: 6 }).map((_, i) => (
                       <tr key={i} className="border-t border-stone-100">
-                        <td colSpan={9} className="px-4 py-3"><Skeleton className="h-6 w-full" /></td>
+                        <td colSpan={10} className="px-4 py-3"><Skeleton className="h-6 w-full" /></td>
                       </tr>
                     ))
                   : page?.items.map((a) => (
@@ -372,26 +389,35 @@ export function AdminDashboard() {
                           <button type="button" onClick={() => openApplication(a.application_id)} className="font-mono text-xs font-semibold text-brand hover:underline">
                             {a.application_id}
                           </button>
-                          {a.is_demo && <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">PROVISIONAL</span>}
+                          {a.guard_flagged && (
+                            <span title="Flagged by the range guard" className="ml-2 inline-flex align-middle text-amber-700">
+                              <ShieldAlert className="size-3.5" aria-label="Flagged by the range guard" />
+                            </span>
+                          )}
                         </td>
                         <td className="px-4 py-3">
                           <p className="font-medium text-stone-900">{a.full_name}</p>
-                          <p className="text-xs text-stone-500">{a.profession.replace(/_/g, " ")}</p>
+                          <p className="text-xs text-stone-500">{a.purpose}</p>
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-stone-600">{formatDate(a.created_at, true)}</td>
-                        <td className="px-4 py-3 tabular-nums">{formatLakhCrore(a.loan_amount)}</td>
-                        <td className="px-4 py-3 tabular-nums">{formatPercent(a.default_probability)}</td>
-                        <td className="px-4 py-3"><BandBadge band={a.risk_band} /></td>
-                        <td className={cn("px-4 py-3 text-xs font-semibold", a.decision === "APPROVED" ? "text-emerald-800" : "text-rose-800")}>
-                          {a.decision === "APPROVED" ? "Approve" : "Reject"}
+                        <td className="px-4 py-3 tabular-nums">{formatUSD(a.loan_amount)}</td>
+                        <td className="px-4 py-3 whitespace-nowrap tabular-nums">{a.fico} / {a.dti}%</td>
+                        <td className="px-4 py-3">
+                          <span className="mr-2 tabular-nums">{a.eligibility_score.toFixed(1)}</span>
+                          <TierBadge tier={a.eligibility_tier} kind="eligibility" />
                         </td>
-                        <td className="px-4 py-3"><DecisionBadge decision={a.final_decision} overridden={a.final_decision !== "PENDING" && a.final_decision !== a.decision} /></td>
+                        <td className="px-4 py-3">
+                          <span className="mr-2 tabular-nums">{formatPct(a.default_probability)}</span>
+                          <TierBadge tier={a.risk_tier} kind="risk" />
+                        </td>
+                        <td className="px-4 py-3"><RecommendationBadge decision={a.recommendation} /></td>
+                        <td className="px-4 py-3"><DecisionBadge decision={a.final_decision} overridden={a.status === "Overridden"} /></td>
                         <td className="px-4 py-3 text-stone-600">{a.status}</td>
                       </tr>
                     ))}
                 {page && page.items.length === 0 && (
                   <tr>
-                    <td colSpan={9} className="px-4 py-12 text-center text-stone-500">No applications match these filters.</td>
+                    <td colSpan={10} className="px-4 py-12 text-center text-stone-500">No applications match these filters.</td>
                   </tr>
                 )}
               </tbody>
@@ -490,7 +516,7 @@ function MessagesInbox({
         body: JSON.stringify({ body: replyText.trim(), resolve: resolveOnReply }),
       });
       const body = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(body?.error?.message ?? "Couldn’t send the reply.");
+      if (!res.ok) throw new Error(body?.error?.message ?? "Could not send the reply.");
       toast.success(body.status === "demo" ? "Reply saved in the outbox (email delivery is off)" : "Reply sent");
       setReplyText("");
       setReplyTo(null);
@@ -531,7 +557,7 @@ function MessagesInbox({
       toast.success(resolved ? "Marked as resolved" : "Reopened");
       setLocalKey((k) => k + 1);
     } catch (e) {
-      if ((e as Error).message !== "unauthorized") toast.error("Couldn’t update the message.");
+      if ((e as Error).message !== "unauthorized") toast.error("Could not update the message.");
     } finally {
       setBusy(null);
     }
@@ -557,7 +583,7 @@ function MessagesInbox({
           <Skeleton className="h-16 w-full" />
         </div>
       ) : data.items.length === 0 ? (
-        <p className="px-5 py-10 text-center text-sm text-stone-500">{showResolved ? "No messages yet." : "No open messages — inbox zero."}</p>
+        <p className="px-5 py-10 text-center text-sm text-stone-500">{showResolved ? "No messages yet." : "No open messages. Inbox zero."}</p>
       ) : (
         <ul className="divide-y divide-stone-100">
           {data.items.map((m) => (
@@ -612,7 +638,7 @@ function MessagesInbox({
                     maxLength={5000}
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}
-                    placeholder="Write your reply…"
+                    placeholder="Write your reply"
                     className="mt-1 bg-white"
                   />
                   <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -638,6 +664,7 @@ const EMAIL_KIND: Record<string, string> = {
   application_received: "Application received",
   decision: "Decision",
   decision_update: "Decision update",
+  info_requested: "Information requested",
   contact_ack: "Contact acknowledgement",
   contact_reply: "Contact reply",
 };
@@ -768,9 +795,10 @@ function ApplicationDrawer({
   const [note, setNote] = useState("");
   const [message, setMessage] = useState("");
   const [asking, setAsking] = useState(false);
-  const [saving, setSaving] = useState<null | "approve" | "reject" | "request_info">(null);
+  type Action = "approve" | "approve_counter_offer" | "reject" | "request_info";
+  const [saving, setSaving] = useState<null | Action>(null);
 
-  async function act(action: "approve" | "reject" | "request_info") {
+  async function act(action: Action) {
     if (!a) return;
     setSaving(action);
     try {
@@ -782,7 +810,7 @@ function ApplicationDrawer({
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error?.details?.[0]?.message ?? data?.error?.message ?? "Update failed");
       toast.success(
-        action === "approve" ? "Application approved. The applicant has been emailed."
+        action === "approve" || action === "approve_counter_offer" ? "Application approved. The applicant has been emailed."
           : action === "reject" ? "Application rejected. The applicant has been emailed."
           : "Request sent. The applicant has been emailed.",
       );
@@ -800,18 +828,14 @@ function ApplicationDrawer({
   const rows: [string, React.ReactNode][] = a
     ? [
         ["Email", a.email],
-        ["Phone", `${a.phone}${a.phone_verified ? " · verified" : ""}`],
-        ["Age", a.age],
-        ["Marital status", a.marital_status],
-        ["Profession", a.profession.replace(/_/g, " ")],
-        ["Experience", `${a.experience} yrs (${a.current_job_years} current job)`],
-        ["Income", formatINR(a.income)],
-        ["Location", `${a.city.replace(/\[\d+\]/, "").replace(/_/g, " ")}, ${a.state.replace(/\[\d+\]/, "").replace(/_/g, " ")}`],
-        ["House", `${a.house_ownership} · ${a.current_house_years} yrs`],
-        ["Car", a.car_ownership],
-        ["Loan", `${formatINR(a.loan_amount)} · ${a.tenure_months} mo · ${a.purpose}`],
+        ["Purpose", a.purpose],
+        ["Loan amount", formatUSD(a.loan_amount)],
+        ["FICO score", a.fico],
+        ["DTI", `${a.dti}%`],
+        ...(a.approved_amount !== null ? ([["Approved amount", formatUSD(a.approved_amount)]] as [string, React.ReactNode][]) : []),
       ]
     : [];
+  const rec = a ? DECISION_COPY[a.recommendation] : null;
 
   return (
     <Sheet open={!!a} onOpenChange={(o) => !o && onClose()}>
@@ -820,37 +844,50 @@ function ApplicationDrawer({
           <>
             <SheetHeader className="border-b border-stone-100">
               <SheetTitle className="flex flex-wrap items-center gap-2 text-lg">
-                {a.full_name} <DecisionBadge decision={a.final_decision} overridden={a.final_decision !== "PENDING" && a.final_decision !== a.decision} />
+                {a.full_name} <DecisionBadge decision={a.final_decision} overridden={a.status === "Overridden"} />
               </SheetTitle>
               <SheetDescription className="font-mono">
                 {a.application_id} · {formatDate(a.created_at, true)}
               </SheetDescription>
             </SheetHeader>
             <div className="space-y-6 px-4 pb-8">
-              {a.is_demo && (
-                <p className="rounded-lg bg-amber-50 p-3 text-xs text-amber-900">Decided while the risk model was unavailable (provisional decision, not a model output).</p>
-              )}
               <section className="rounded-md border border-stone-200 p-4" aria-labelledby="officer-decision-heading">
                 <h3 id="officer-decision-heading" className="text-sm font-semibold text-navy">Officer decision</h3>
-                <div
-                  className={cn(
-                    "mt-3 flex items-center justify-between gap-3 rounded-md p-3 text-sm",
-                    a.decision === "APPROVED" ? "bg-emerald-50 text-emerald-900" : "bg-rose-50 text-rose-900",
+                <div className={cn("mt-3 rounded-md border p-3 text-sm", rec!.tone)}>
+                  <p className="flex flex-wrap items-center justify-between gap-2">
+                    <span>
+                      LendWise recommends <strong>{rec!.label.toLowerCase()}</strong>
+                    </span>
+                    <span className="text-xs">
+                      Eligibility {a.eligibility_score.toFixed(1)} · charge-off risk {formatPct(a.default_probability)}
+                    </span>
+                  </p>
+                  {a.recommendation_reasons.length > 0 && (
+                    <ul className="mt-2 list-disc space-y-0.5 pl-4 text-xs">
+                      {a.recommendation_reasons.map((x) => (
+                        <li key={x}>{x}</li>
+                      ))}
+                    </ul>
                   )}
-                >
-                  <span>
-                    Model recommends <strong>{a.decision === "APPROVED" ? "Approve" : "Reject"}</strong>
-                  </span>
-                  <span className="text-xs">
-                    Approval score {formatPercent(1 - a.default_probability, 0)} · {a.risk_band} risk
-                  </span>
                 </div>
+                {a.guard_flagged && (
+                  <div className="mt-2 rounded-md bg-amber-50 p-3 text-xs text-amber-900">
+                    <p className="flex items-center gap-1.5 font-semibold">
+                      <ShieldAlert className="size-3.5" aria-hidden /> Range guard flag
+                    </p>
+                    <ul className="mt-1 list-disc space-y-0.5 pl-4">
+                      {a.guard_reasons.map((x) => (
+                        <li key={x}>{x}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
                 <p className="mt-2 text-xs text-stone-600">
                   {a.final_decision === "PENDING"
                     ? a.status === "Info Requested"
                       ? "Waiting for the applicant to reply to your request."
-                      : "Awaiting your decision. The applicant can’t see the model’s recommendation."
-                    : `Final decision: ${a.final_decision === "APPROVED" ? "Approved" : "Rejected"}${a.final_decision !== a.decision ? " (against the model)" : ""}. You can still change it.`}
+                      : "Awaiting your decision."
+                    : `Final decision: ${a.final_decision === "APPROVED" ? `Approved ${formatUSD(a.approved_amount ?? a.loan_amount)}` : "Rejected"}${a.status === "Overridden" ? " (against the recommendation)" : ""}. You can still change it.`}
                 </p>
 
                 {a.messages.length > 0 && (
@@ -861,7 +898,7 @@ function ApplicationDrawer({
                 )}
 
                 <label htmlFor="officer-note" className="mt-4 block text-xs font-medium text-stone-700">
-                  Internal note (optional; required if you go against the model)
+                  Internal note (optional; required if you go against an approve or reject recommendation)
                 </label>
                 <Textarea
                   id="officer-note"
@@ -869,14 +906,14 @@ function ApplicationDrawer({
                   onChange={(e) => setNote(e.target.value)}
                   rows={2}
                   maxLength={2000}
-                  placeholder="Visible to officers only…"
+                  placeholder="Visible to officers only"
                   className="mt-1"
                 />
 
                 {asking && (
                   <div className="mt-3">
                     <label htmlFor="officer-message" className="block text-xs font-medium text-stone-700">
-                      Message to the applicant (they’ll get it by email and on their status page)
+                      Message to the applicant (sent by email and shown on their status page)
                     </label>
                     <Textarea
                       id="officer-message"
@@ -884,16 +921,30 @@ function ApplicationDrawer({
                       onChange={(e) => setMessage(e.target.value)}
                       rows={3}
                       maxLength={2000}
-                      placeholder="e.g. Please share your last 3 months’ salary slips."
+                      placeholder="For example: please share your last two pay stubs."
                       className="mt-1"
                     />
                   </div>
                 )}
 
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <Button className="bg-emerald-700 text-white hover:bg-emerald-800" onClick={() => act("approve")} disabled={!!saving || a.final_decision === "APPROVED"}>
-                    {saving === "approve" ? <Loader2 className="animate-spin" aria-hidden /> : <CheckCircle2 aria-hidden />} Accept
+                  <Button
+                    className="bg-emerald-700 text-white hover:bg-emerald-800"
+                    onClick={() => act("approve")}
+                    disabled={!!saving || (a.final_decision === "APPROVED" && a.approved_amount === a.loan_amount)}
+                  >
+                    {saving === "approve" ? <Loader2 className="animate-spin" aria-hidden /> : <CheckCircle2 aria-hidden />} Approve {formatUSD(a.loan_amount)}
                   </Button>
+                  {a.counter_offer !== null && (
+                    <Button
+                      variant="outline"
+                      className="border-emerald-300 text-emerald-800"
+                      onClick={() => act("approve_counter_offer")}
+                      disabled={!!saving || (a.final_decision === "APPROVED" && a.approved_amount === a.counter_offer)}
+                    >
+                      {saving === "approve_counter_offer" ? <Loader2 className="animate-spin" aria-hidden /> : <CheckCircle2 aria-hidden />} Approve counter-offer {formatUSD(a.counter_offer)}
+                    </Button>
+                  )}
                   <Button className="bg-rose-700 text-white hover:bg-rose-800" onClick={() => act("reject")} disabled={!!saving || a.final_decision === "REJECTED"}>
                     {saving === "reject" ? <Loader2 className="animate-spin" aria-hidden /> : <XCircle aria-hidden />} Reject
                   </Button>
@@ -915,16 +966,16 @@ function ApplicationDrawer({
               </section>
 
               <section>
-                <h3 className="text-sm font-semibold text-navy">Model output</h3>
+                <h3 className="text-sm font-semibold text-navy">Screening result</h3>
                 <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
                   {[
-                    ["Model decision", a.decision],
-                    ["Final decision", a.final_decision],
-                    ["Risk class", a.risk_class],
-                    ["Risk band", a.risk_band],
-                    ["Default probability", formatPercent(a.default_probability, 2)],
-                    ["Confidence", formatPercent(a.confidence, 1)],
+                    ["Eligibility score", `${a.eligibility_score.toFixed(1)} (${a.eligibility_tier})`],
+                    ["Default probability", `${formatPct(a.default_probability, 2)} (${a.risk_tier})`],
+                    ["Expected loss", `${formatPct(a.expected_loss, 2)} of principal`],
+                    ["Counter-offer", a.counter_offer !== null ? formatUSD(a.counter_offer) : "None"],
+                    ["Recommendation", rec!.label],
                     ["Status", a.status],
+                    ["Range guard", a.guard_flagged ? "Flagged" : "Not flagged"],
                     ["Model version", a.model_version],
                   ].map(([k, v]) => (
                     <div key={String(k)} className="rounded-lg bg-stone-50 p-3">
@@ -933,15 +984,6 @@ function ApplicationDrawer({
                     </div>
                   ))}
                 </dl>
-                {a.indicative_factors.length > 0 && (
-                  <ul className="mt-3 flex flex-wrap gap-2">
-                    {a.indicative_factors.map((f) => (
-                      <li key={f.key} className={cn("rounded-full px-2.5 py-1 text-xs", f.direction === "risk" ? "bg-rose-50 text-rose-800" : "bg-emerald-50 text-emerald-800")}>
-                        {f.label}
-                      </li>
-                    ))}
-                  </ul>
-                )}
               </section>
               <section>
                 <h3 className="text-sm font-semibold text-navy">Applicant</h3>
@@ -954,22 +996,6 @@ function ApplicationDrawer({
                   ))}
                 </dl>
               </section>
-              <details className="rounded-lg bg-stone-50 p-3 text-sm">
-                <summary className="cursor-pointer font-medium text-navy">Engineered features</summary>
-                <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                  {Object.entries(a.engineered_features).map(([k, v]) => (
-                    <div key={k}>
-                      <dt className="text-stone-500">{k}</dt>
-                      <dd className="font-mono">{typeof v === "number" ? Number(v.toFixed(4)).toLocaleString("en-IN") : v}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </details>
-              {a.warnings.length > 0 && (
-                <ul className="space-y-1 rounded-lg bg-amber-50 p-3 text-xs text-amber-900">
-                  {a.warnings.map((w) => <li key={w}>{w}</li>)}
-                </ul>
-              )}
               {a.officer_note && (
                 <section>
                   <h3 className="text-sm font-semibold text-navy">Officer notes</h3>
@@ -1005,7 +1031,7 @@ function ApplicationDrawer({
               <section className="rounded-md border border-rose-200 p-4">
                 <h3 className="text-sm font-semibold text-rose-800">Delete application</h3>
                 <p className="mt-1 text-xs text-stone-600">
-                  Permanently removes this application and its personal data (e.g. for a data-deletion request). This can’t be undone.
+                  Permanently removes this application and its personal data (for example after a data-deletion request). This cannot be undone.
                 </p>
                 {!confirmDelete ? (
                   <Button variant="destructive" className="mt-3" onClick={() => setConfirmDelete(true)}>

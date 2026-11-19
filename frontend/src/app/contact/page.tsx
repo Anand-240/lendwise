@@ -11,15 +11,15 @@ export const metadata: Metadata = {
 export default function ContactPage() {
   return (
     <>
-      <PageHeader eyebrow="Contact" title="We’re here to help" description="Questions about an application or how decisions are made? Send us a message." />
+      <PageHeader eyebrow="Contact" title="Contact the LendWise team" description="Questions about an application, the models or the project? Send us a message." />
       <section className="container-page grid gap-10 py-16 lg:grid-cols-[1fr_1.5fr]">
         <div>
-          <h2 className="border-b border-stone-200 pb-3 text-xl font-semibold text-navy">Customer support</h2>
+          <h2 className="border-b border-stone-200 pb-3 text-xl font-semibold text-navy">Getting in touch</h2>
           <dl className="divide-y divide-stone-200 text-sm">
             {[
-              ["Hours", "Monday to Saturday, 9:30 am – 6:30 pm IST"],
-              ["Response time", "Within two business days"],
-              ["Office", "Bengaluru, Karnataka, India"],
+              ["Response time", "Within two working days"],
+              ["Team", "B.Tech project team, Computer Science & Engineering"],
+              ["Location", "ABES Engineering College, Ghaziabad"],
             ].map(([k, v]) => (
               <div key={k} className="grid grid-cols-[8rem_1fr] gap-4 py-3.5">
                 <dt className="font-medium text-stone-900">{k}</dt>

@@ -13,7 +13,7 @@ export default function TermsPage() {
   return (
     <>
       <PageHeader eyebrow="Legal" title="Terms of use" />
-      <LegalBody updated="25 September 2026">
+      <LegalBody updated="20 November 2026">
         <p>By using LendWise you agree to these terms. If you do not agree, please do not use the platform.</p>
         <h2>Not a credit offer</h2>
         <p>{DISCLAIMER} No loan will be disbursed, and an approval on LendWise creates no obligation on anyone to lend.</p>
@@ -22,12 +22,14 @@ export default function TermsPage() {
           <li>Provide information that is accurate to the best of your knowledge. Please avoid entering sensitive information you are not comfortable sharing online.</li>
           <li>Do not attempt to disrupt, overload, scrape or gain unauthorised access to the service.</li>
         </ul>
-        <h2>Estimates</h2>
-        <p>EMI figures use a fixed indicative interest rate and a standard reducing-balance formula. They are indicative only.</p>
         <h2>Model limitations</h2>
-        <p>The model may be wrong and may reflect biases in historical data. Do not rely on it for real financial decisions.</p>
+        <p>
+          The models were trained on US LendingClub data from 2012 to 2016 and use only three inputs. The eligibility score is not a chance
+          of approval, the charge-off probability is an estimate for a group of similar loans, and no fairness analysis has been done yet.
+          They may be wrong and may reflect biases in historical data. Do not rely on them for real financial decisions.
+        </p>
         <h2>Liability</h2>
-        <p>The platform is provided “as is” for educational purposes, without warranties of any kind. To the extent permitted by law, we are not liable for any loss arising from its use.</p>
+        <p>The platform is provided &quot;as is&quot; for educational purposes, without warranties of any kind. To the extent permitted by law, we are not liable for any loss arising from its use.</p>
         <h2>Changes</h2>
         <p>We may update these terms from time to time. Continued use after changes means you accept the updated terms.</p>
       </LegalBody>

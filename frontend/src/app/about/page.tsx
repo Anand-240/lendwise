@@ -2,60 +2,114 @@ import type { Metadata } from "next";
 import { PageHeader } from "@/components/site/page-header";
 import { ButtonLink } from "@/components/site/button-link";
 import { Disclaimer } from "@/components/site/disclaimer";
+import { PROJECT } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "About",
-  description: "LendWise makes instant, transparent, ML-powered loan decisions.",
+  description: "LendWise is a B.Tech project on loan eligibility screening and charge-off risk prediction using machine learning.",
   alternates: { canonical: "/about" },
 };
 
-const VALUES = [
-  { title: "Transparency", text: "We show what the model uses, how it performs and where it falls short." },
-  { title: "Speed with care", text: "Instant decisions, delivered respectfully — especially when the answer is no." },
-  { title: "Human oversight", text: "Automation assists; loan officers can always review and override." },
-  { title: "Responsible by design", text: "LendWise shows how machine learning can be used responsibly in lending. It does not issue credit." },
+const OBJECTIVES = [
+  "Prepare two clean datasets from the LendingClub files, one for screening and one for risk.",
+  "Train an eligibility model that gives a score from 0 to 100.",
+  "Train a charge-off model on loans from 2012 to 2014 and test it on loans from 2015.",
+  "Use only the three inputs both files share, and keep the models monotonic and calibrated.",
+  "Audit the data and find out where the AUC of 0.99 came from.",
+  "Build an input validator, simple decision rules and an interface.",
+  "Write an automated test suite that checks the models and the interface code.",
+];
+
+const FUTURE = [
+  "Add credit history and loan grade to the risk model.",
+  "Recalibrate the eligibility score to the real acceptance rate of about 8%.",
+  "Add a logistic regression baseline with bootstrap confidence intervals.",
+  "Test on recent data and on data from other regions, including Indian bureau data such as CIBIL.",
+  "Show SHAP explanations for each result so a reviewer can see why a score was given.",
+  "Carry out a fairness and adverse-impact analysis before any use on real people.",
 ];
 
 export default function AboutPage() {
   return (
     <>
       <PageHeader
-        eyebrow="About LendWise"
-        title="Making automated lending decisions understandable"
-        description="LendWise uses a machine-learning risk model to give instant loan decisions, and explains every one of them clearly."
+        eyebrow="About"
+        title="About LendWise"
+        description={PROJECT.title}
       />
       <section className="container-page grid gap-12 py-16 lg:grid-cols-2">
-        <div className="space-y-4 text-stone-700">
-          <h2 className="text-2xl font-semibold text-navy">Our story</h2>
+        <div className="space-y-4 leading-relaxed text-stone-700">
+          <h2 className="text-2xl font-semibold text-navy">The project</h2>
           <p>
-            LendWise began as a data-science project exploring loan default prediction on a dataset of 252,000 applicant profiles. We engineered features,
-            compared several models and selected a tuned Random Forest that balances catching risky profiles with approving good ones.
+            Screening a loan application is one of the first and most important steps in lending. A lender has to decide whether the
+            application fits its policy and how likely the borrower is to repay. LendWise is a screening prototype built on the public
+            LendingClub data, which contains both the loans that were funded and the applications that were rejected.
           </p>
           <p>
-            We then wrapped that model in a complete digital lending experience — application, instant decision, decision letter, status tracking and an
-            officer dashboard — to show what a responsible, end-to-end ML product looks like.
+            It started from credit-risk notebooks that predicted repayment with a random 80:20 split. Reviewing that setup, we noticed it
+            predicted repayment and not approval. Our next model, trained on accepted versus rejected applications, reached an AUC of 0.99,
+            and an audit showed this came mainly from how the two files were recorded. That became the turning point: instead of pushing the
+            score higher, we built something whose results we could defend.
           </p>
           <p>
-            Every decision screen is honest about what the model does and doesn’t consider. Loan amount, for instance, is recorded but is not a model input.
+            The final system pairs two monotonic, calibrated gradient boosting models with an input validator, decision rules based on
+            expected loss, a range guard, a counter-offer search, this website with an officer dashboard, and an automated acceptance suite.
+            It is meant to assist a human reviewer, not to make real lending decisions on its own.
           </p>
-        </div>
-        <div>
-          <h2 className="border-b border-stone-200 pb-3 text-2xl font-semibold text-navy">What we stand for</h2>
-          <dl className="divide-y divide-stone-200">
-            {VALUES.map((v) => (
-              <div key={v.title} className="py-4">
-                <dt className="font-semibold text-navy">{v.title}</dt>
-                <dd className="mt-1 text-sm text-stone-600">{v.text}</dd>
-              </div>
+          <h3 className="pt-4 text-lg font-semibold text-navy">Objectives</h3>
+          <ul className="list-disc space-y-1.5 pl-5 text-sm">
+            {OBJECTIVES.map((o) => (
+              <li key={o}>{o}</li>
             ))}
-          </dl>
+          </ul>
+        </div>
+        <div className="space-y-8">
+          <div className="rounded-lg border border-stone-200 p-6">
+            <h2 className="text-lg font-semibold text-navy">Team</h2>
+            <ul className="mt-3 space-y-1.5 text-stone-700">
+              {PROJECT.team.map((m) => (
+                <li key={m}>{m}</li>
+              ))}
+            </ul>
+            <dl className="mt-5 space-y-3 border-t border-stone-200 pt-4 text-sm">
+              <div>
+                <dt className="text-stone-500">Mentor</dt>
+                <dd className="font-medium text-stone-900">{PROJECT.mentor}</dd>
+              </div>
+              <div>
+                <dt className="text-stone-500">Head of department</dt>
+                <dd className="font-medium text-stone-900">{PROJECT.hod}</dd>
+              </div>
+              <div>
+                <dt className="text-stone-500">Institution</dt>
+                <dd className="font-medium text-stone-900">
+                  {PROJECT.department}, {PROJECT.college}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-stone-500">University</dt>
+                <dd className="font-medium text-stone-900">{PROJECT.university}</dd>
+              </div>
+            </dl>
+          </div>
+          <div className="rounded-lg border border-stone-200 p-6">
+            <h2 className="text-lg font-semibold text-navy">Future directions</h2>
+            <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm text-stone-700">
+              {FUTURE.map((f) => (
+                <li key={f}>{f}</li>
+              ))}
+            </ul>
+          </div>
         </div>
       </section>
       <section className="container-page pb-16">
         <Disclaimer />
         <div className="mt-8 flex flex-wrap gap-3">
-          <ButtonLink href="/how-it-works" variant="default">See how it works</ButtonLink>
-          <ButtonLink href="/contact" variant="outline">Get in touch</ButtonLink>
+          <ButtonLink href="/how-it-works" variant="default">How it works</ButtonLink>
+          <ButtonLink href="/results" variant="outline">Results</ButtonLink>
+          <a href={PROJECT.repo} className="inline-flex h-10 items-center rounded-lg border border-border px-4 text-sm font-medium hover:bg-stone-50">
+            Source code on GitHub
+          </a>
         </div>
       </section>
     </>

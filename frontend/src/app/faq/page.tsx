@@ -6,12 +6,12 @@ import { FAQS } from "@/lib/faq";
 
 export const metadata: Metadata = {
   title: "FAQ",
-  description: "Answers to common questions about LendWise applications, decisions and privacy.",
+  description: "Answers to common questions about LendWise: the inputs, the two models, the decision rules and your data.",
   alternates: { canonical: "/faq" },
 };
 
 export default function FaqPage() {
-  const categories = ["General", "Decision", "Privacy"] as const;
+  const categories = ["General", "Models", "Decision", "Privacy"] as const;
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -20,7 +20,7 @@ export default function FaqPage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
-      <PageHeader eyebrow="Help centre" title="Frequently asked questions" description="Everything you need to know about applying, decisions and your data." />
+      <PageHeader eyebrow="FAQ" title="Frequently asked questions" description="The inputs, the two models, how a decision is made and what happens to your data." />
       <section className="container-page max-w-4xl space-y-10 py-16">
         {categories.map((c) => (
           <div key={c}>

@@ -1,33 +1,35 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ApplyWizard } from "@/components/apply/apply-wizard";
-import { ServiceUnavailable } from "@/components/site/service-unavailable";
+import { ApplyForm } from "@/components/apply/apply-form";
 import { getMetadataUncachedOnFailure } from "@/lib/backend";
 
 export const metadata: Metadata = {
   title: "Apply for a loan",
-  description: "Complete a 5-step online loan application and get an instant AI-powered decision.",
+  description: "Submit a loan application for screening and a loan officer's decision.",
   alternates: { canonical: "/apply" },
 };
 
-// ISR: metadata changes rarely; a short window also lets an "unavailable" render recover quickly.
-export const revalidate = 60;
+const FALLBACK_PURPOSES = ["Debt consolidation", "Credit card refinancing", "Home improvement", "Major purchase", "Car", "Medical", "Business", "Other"];
 
-export default async function ApplyPage() {
+export default async function ApplyPage(props: PageProps<"/apply">) {
+  const sp = await props.searchParams;
+  const pick = (k: string) => (typeof sp[k] === "string" ? (sp[k] as string).slice(0, 20) : undefined);
   const md = await getMetadataUncachedOnFailure();
   return (
     <div className="bg-stone-50">
       <div className="container-page py-10 md:py-14">
         <div className="mb-8 max-w-2xl">
           <nav aria-label="Breadcrumb" className="text-xs text-stone-500">
-            <Link href="/" className="hover:text-navy hover:underline">Home</Link> <span aria-hidden>›</span> <span className="text-stone-700">Loan application</span>
+            <Link href="/" className="hover:text-navy hover:underline">Home</Link> <span aria-hidden>›</span>{" "}
+            <span className="text-stone-700">Loan application</span>
           </nav>
           <h1 className="mt-3 text-3xl font-semibold text-navy md:text-[2.25rem]">Loan application</h1>
           <p className="mt-3 text-stone-600">
-            Five short sections, about three minutes. Our risk model assesses it instantly and a loan officer confirms the final decision.
+            Fill in the loan details and how to reach you. LendWise screens the application instantly, then a loan officer reviews it
+            and makes the final decision. Just want a quick result? <Link href="/screen" className="text-brand underline">Screen without saving</Link>.
           </p>
         </div>
-        {md ? <ApplyWizard metadata={md} /> : <ServiceUnavailable />}
+        <ApplyForm purposes={md?.purposes ?? FALLBACK_PURPOSES} initial={{ loan_amount: pick("loan"), fico: pick("fico"), dti: pick("dti") }} />
       </div>
     </div>
   );
