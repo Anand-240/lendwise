@@ -268,3 +268,16 @@ def test_api_keeps_screening_when_the_database_is_down(client, officer, monkeypa
     monkeypatch.setattr(db_module, "_last_try", 0.0)
     assert client.get("/api/v1/health").json()["database"] == "ok"
     assert client.post("/api/v1/applications", json=APPLICANT).status_code == 201
+
+
+def test_officer_message_with_a_decision_reaches_the_applicant(client, officer):
+    created = client.post("/api/v1/applications", json={**APPLICANT, "full_name": "Message Check", "loan_amount": 5000, "dti": 10}).json()
+    aid = created["application_id"]
+    r = client.patch(f"/api/v1/admin/applications/{aid}",
+                     json={"action": "approve", "message": "Approved after checking your income documents.", "note": "Officer-only remark"},
+                     headers=officer)
+    assert r.status_code == 200
+    public = client.get(f"/api/v1/applications/{aid}/status", params={"email": APPLICANT["email"]}).json()
+    assert public["decision"] == "APPROVED"
+    assert [m["body"] for m in public["messages"]] == ["Approved after checking your income documents."]
+    assert "Officer-only remark" not in str(public)

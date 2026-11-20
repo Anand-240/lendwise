@@ -17,7 +17,6 @@ import {
   Loader2,
   LogOut,
   MessageSquareText,
-  Send,
   Trash2,
   RefreshCw,
   Search,
@@ -643,7 +642,6 @@ function ApplicationDrawer({
   }
   const [note, setNote] = useState("");
   const [message, setMessage] = useState("");
-  const [asking, setAsking] = useState(false);
   type Action = "approve" | "approve_counter_offer" | "reject" | "request_info";
   const [saving, setSaving] = useState<null | Action>(null);
 
@@ -654,7 +652,7 @@ function ApplicationDrawer({
       const res = await authed(`/api/admin/applications/${a.application_id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, note: note.trim() || null, message: action === "request_info" ? message.trim() : null }),
+        body: JSON.stringify({ action, note: note.trim() || null, message: message.trim() || null }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error?.details?.[0]?.message ?? data?.error?.message ?? "Update failed");
@@ -665,7 +663,6 @@ function ApplicationDrawer({
       );
       setNote("");
       setMessage("");
-      setAsking(false);
       onUpdated(data);
     } catch (e) {
       if ((e as Error).message !== "unauthorized") toast.error((e as Error).message);
@@ -746,8 +743,21 @@ function ApplicationDrawer({
                   </div>
                 )}
 
-                <label htmlFor="officer-note" className="mt-4 block text-xs font-medium text-stone-700">
-                  Internal note (optional; required if you go against an approve or reject recommendation)
+                <label htmlFor="officer-message" className="mt-4 block text-xs font-medium text-stone-700">
+                  Message to the applicant (shown on their status page; required for Request more info)
+                </label>
+                <Textarea
+                  id="officer-message"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  rows={3}
+                  maxLength={2000}
+                  placeholder="For example: Approved after checking your income. Or: please share your last two pay stubs."
+                  className="mt-1"
+                />
+
+                <label htmlFor="officer-note" className="mt-3 block text-xs font-medium text-stone-700">
+                  Internal note (officers only; required if you go against an approve or reject recommendation)
                 </label>
                 <Textarea
                   id="officer-note"
@@ -755,26 +765,9 @@ function ApplicationDrawer({
                   onChange={(e) => setNote(e.target.value)}
                   rows={2}
                   maxLength={2000}
-                  placeholder="Visible to officers only"
+                  placeholder="Never shown to the applicant"
                   className="mt-1"
                 />
-
-                {asking && (
-                  <div className="mt-3">
-                    <label htmlFor="officer-message" className="block text-xs font-medium text-stone-700">
-                      Message to the applicant (shown on their status page)
-                    </label>
-                    <Textarea
-                      id="officer-message"
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      rows={3}
-                      maxLength={2000}
-                      placeholder="For example: please share your last two pay stubs."
-                      className="mt-1"
-                    />
-                  </div>
-                )}
 
                 <div className="mt-4 flex flex-wrap gap-2">
                   <Button
@@ -797,20 +790,14 @@ function ApplicationDrawer({
                   <Button className="bg-rose-700 text-white hover:bg-rose-800" onClick={() => act("reject")} disabled={!!saving || a.final_decision === "REJECTED"}>
                     {saving === "reject" ? <Loader2 className="animate-spin" aria-hidden /> : <XCircle aria-hidden />} Reject
                   </Button>
-                  {!asking ? (
-                    <Button variant="outline" onClick={() => setAsking(true)} disabled={!!saving || a.final_decision !== "PENDING"}>
-                      <MessageSquareText aria-hidden /> Request more info
-                    </Button>
-                  ) : (
-                    <>
-                      <Button variant="outline" onClick={() => act("request_info")} disabled={!!saving || message.trim().length < 10}>
-                        {saving === "request_info" ? <Loader2 className="animate-spin" aria-hidden /> : <Send aria-hidden />} Send request
-                      </Button>
-                      <Button variant="ghost" onClick={() => { setAsking(false); setMessage(""); }} disabled={!!saving}>
-                        Cancel
-                      </Button>
-                    </>
-                  )}
+                  <Button
+                    variant="outline"
+                    onClick={() => act("request_info")}
+                    disabled={!!saving || a.final_decision !== "PENDING" || message.trim().length < 10}
+                    title={message.trim().length < 10 ? "Write your question in the message box first (at least 10 characters)" : undefined}
+                  >
+                    {saving === "request_info" ? <Loader2 className="animate-spin" aria-hidden /> : <MessageSquareText aria-hidden />} Request more info
+                  </Button>
                 </div>
               </section>
 
